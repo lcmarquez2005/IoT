@@ -1,0 +1,32 @@
+# Secretos y variables de entorno (NUNCA SUBIR)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Backups y temporales
+*.bak
+*.git_sub_bak/
+*Zone.Identifier*
+
+# Entornos virtuales y Python
+.venv/
+venv/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.zip
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arduino / PlatformIO / Builds
+build/
+*.bin
+*.hex
+*.elf
+.pio/
