@@ -3,7 +3,7 @@ import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecu
 const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
   typeof window !== 'undefined' && window.location.hostname === 'localhost'
     ? 'http://localhost:8000'
-    : 'https://tu-servidor-ec2.compute.amazonaws.com'
+    : 'https://ec2-100-50-120-115.compute-1.amazonaws.com'
 );
 
 export function getApiBaseUrl(): string {

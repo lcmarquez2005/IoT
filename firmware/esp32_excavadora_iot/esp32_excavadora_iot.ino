@@ -30,7 +30,7 @@ const byte PIN_RESET_WIFI  = 4;  // Botón físico de reset Wi-Fi (Pulsar 5s a G
 // IMPORTANTE: Modifica WS_HOST con el dominio o IP pública de tu instancia EC2.
 // Si tu servidor tiene certificado SSL/TLS (HTTPS en el puerto 443), usa USE_SSL = true.
 // Si pruebas con puerto HTTP/WS directo (ej. 8000), pon USE_SSL = false y WS_PORT = 8000.
-const char* WS_HOST      = "tu-ec2-instancia.compute.amazonaws.com"; 
+const char* WS_HOST      = "ec2-100-50-120-115.compute-1.amazonaws.com"; 
 const uint16_t WS_PORT   = 443;
 const bool USE_SSL       = true;
 const int VEHICULO_ID    = 1; // Identificador asignado a esta excavadora en RDS
