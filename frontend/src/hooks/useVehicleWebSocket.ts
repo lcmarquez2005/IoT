@@ -43,7 +43,7 @@ export function useVehicleWebSocket(idVehiculo: number) {
         if (!isUnmountedRef.current) {
           setStatus('connected');
 
-          // Keep-alive heartbeat cada 15 segundos para evitar desconexiones por inactividad
+          // Keep-alive heartbeat cada 15 segundos
           heartbeatIntervalRef.current = window.setInterval(() => {
             if (ws.readyState === WebSocket.OPEN) {
               ws.send('ping');
@@ -57,7 +57,11 @@ export function useVehicleWebSocket(idVehiculo: number) {
           const data: WSEventMessage = JSON.parse(event.data);
           if (!isUnmountedRef.current) {
             setLastMessage(data);
-            setEventLogs((prev) => [data, ...prev.slice(0, 99)]);
+            // IMPORTANTE: No saturar el historial de eventos con el handshake ESTADO_INICIAL
+            // Solo registrar eventos de acciones reales (movimientos, inicio/fin de demo, cancelaciones)
+            if (data.evento !== 'ESTADO_INICIAL') {
+              setEventLogs((prev) => [data, ...prev.slice(0, 99)]);
+            }
           }
         } catch (err) {
           console.error('[WS Parse Error]:', err);
@@ -65,7 +69,8 @@ export function useVehicleWebSocket(idVehiculo: number) {
       };
 
       ws.onerror = (err) => {
-        console.warn('[WS Warning/Error]:', err);
+        const wsObj = err.target as WebSocket;
+        console.warn(`[WS Error] Fallo en conexión a ${wsObj?.url || wsUrl}:`, err);
         if (!isUnmountedRef.current) {
           setStatus('error');
         }
@@ -79,7 +84,7 @@ export function useVehicleWebSocket(idVehiculo: number) {
 
         if (!isUnmountedRef.current) {
           setStatus('disconnected');
-          // Reintento limpio de reconexión tras 4 segundos solo si no se desmontó
+          // Reintento limpio de reconexión tras 4 segundos
           reconnectTimeoutRef.current = window.setTimeout(() => {
             connect();
           }, 4000);

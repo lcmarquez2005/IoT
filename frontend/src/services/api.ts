@@ -1,21 +1,25 @@
 import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
 
-const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Limpieza automática de claves antiguas de localStorage que causen errores de CORS / SSL
+if (typeof window !== 'undefined') {
+  const oldApi = localStorage.getItem('IOT_API_BASE_URL');
+  if (oldApi && oldApi.includes('amazonaws.com')) {
+    localStorage.removeItem('IOT_API_BASE_URL');
+  }
+  const oldWs = localStorage.getItem('IOT_WS_BASE_URL');
+  if (oldWs && oldWs.includes('amazonaws.com')) {
+    localStorage.removeItem('IOT_WS_BASE_URL');
+  }
+}
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
-    // En localhost, priorizar el proxy /api para evitar problemas de CORS y certificados auto-firmados
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const saved = localStorage.getItem('IOT_API_BASE_URL');
-      if (saved && !saved.includes('amazonaws.com')) {
-        return saved.replace(/\/$/, '');
-      }
-      return '/api';
-    }
     const saved = localStorage.getItem('IOT_API_BASE_URL');
-    if (saved) return saved.replace(/\/$/, '');
+    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com')) {
+      return saved.replace(/\/$/, '');
+    }
   }
-  return DEFAULT_API_BASE_URL.replace(/\/$/, '');
+  return '/api';
 }
 
 export function setApiBaseUrl(url: string): void {
@@ -26,28 +30,14 @@ export function setApiBaseUrl(url: string): void {
 
 export function getWsBaseUrl(): string {
   if (typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      const saved = localStorage.getItem('IOT_WS_BASE_URL');
-      if (saved && !saved.includes('amazonaws.com')) {
-        return saved.replace(/\/$/, '');
-      }
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}`;
-    }
     const saved = localStorage.getItem('IOT_WS_BASE_URL');
-    if (saved) return saved.replace(/\/$/, '');
-  }
-
-  const api = getApiBaseUrl();
-
-  if (api.startsWith('/') || api === '') {
-    if (typeof window !== 'undefined') {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${protocol}//${window.location.host}`;
+    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com')) {
+      return saved.replace(/\/$/, '');
     }
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}`;
   }
-
-  return api.replace(/^http/, 'ws');
+  return 'ws://localhost:3000';
 }
 
 export function setWsBaseUrl(url: string): void {
