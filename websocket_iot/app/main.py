@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from app.models.estado import Estado
 from app.models.schemas import (
     VehiculoResponse,
@@ -30,6 +31,14 @@ app = FastAPI(
     title="Servidor IoT",
     description="API HTTP y WebSocket para control y monitoreo de vehículos IoT conectada a Amazon RDS (21 Stored Procedures integrados).",
     version="1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 websocket_manager = WebSocketManager()

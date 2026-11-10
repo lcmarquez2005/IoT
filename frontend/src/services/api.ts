@@ -1,10 +1,7 @@
 import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
 
-const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (
-  typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:8000'
-    : 'https://ec2-100-50-120-115.compute-1.amazonaws.com'
-);
+// Si no está definido o estamos en localhost, usar proxy /api para evitar bloqueos de CORS
+const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
@@ -25,7 +22,17 @@ export function getWsBaseUrl(): string {
     const saved = localStorage.getItem('IOT_WS_BASE_URL');
     if (saved) return saved.replace(/\/$/, '');
   }
+
   const api = getApiBaseUrl();
+
+  // Si estamos usando proxy relativo (/api o similar)
+  if (api.startsWith('/') || api === '') {
+    if (typeof window !== 'undefined') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}`;
+    }
+  }
+
   return api.replace(/^http/, 'ws');
 }
 

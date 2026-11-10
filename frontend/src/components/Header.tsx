@@ -176,8 +176,31 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Ej: http://localhost:8000 o https://tu-ec2-url.com
+                  Usa <code className="text-amber-400">/api</code> para el proxy local anti-CORS
                 </span>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempApi('/api');
+                    setTempWs('');
+                  }}
+                  className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-amber-400 hover:bg-slate-750 border border-slate-700"
+                >
+                  ⚡ Preset: Proxy Local (/api)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempApi('https://ec2-100-50-120-115.compute-1.amazonaws.com');
+                    setTempWs('wss://ec2-100-50-120-115.compute-1.amazonaws.com');
+                  }}
+                  className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-750 border border-slate-700"
+                >
+                  AWS Directo
+                </button>
               </div>
 
               <div>
