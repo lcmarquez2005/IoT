@@ -3,22 +3,22 @@ import { ChevronsUp, ChevronsDown, RotateCcw, RotateCw } from 'lucide-react';
 
 interface ArmControlsProps {
   onCommand: (codigo: number, nombre: string) => void;
-  activeCommand?: string | null;
+  demoCommand?: string | null;
   disabled?: boolean;
 }
 
 export const ArmControls: React.FC<ArmControlsProps> = ({
   onCommand,
-  activeCommand,
+  demoCommand = null,
   disabled = false,
 }) => {
-  const isSubir = activeCommand === 'SUBIR_BRAZO';
-  const isBajar = activeCommand === 'BAJAR_BRAZO';
-  const isRotarIzq = activeCommand === 'ABRIR_PALA' || activeCommand === 'ROTAR_IZQ';
-  const isRotarDer = activeCommand === 'CERRAR_PALA' || activeCommand === 'ROTAR_DER';
+  const isSubirDemo = demoCommand === 'SUBIR_BRAZO';
+  const isBajarDemo = demoCommand === 'BAJAR_BRAZO';
+  const isRotarIzqDemo = demoCommand === 'ABRIR_PALA' || demoCommand === 'ROTAR_IZQ';
+  const isRotarDerDemo = demoCommand === 'CERRAR_PALA' || demoCommand === 'ROTAR_DER';
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+    <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl relative">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">
@@ -37,10 +37,10 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
           onClick={() => onCommand(5, 'SUBIR_BRAZO')}
           disabled={disabled}
           title="Subir Brazo (K)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-100 cursor-pointer ${
-            isSubir
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-98'
-              : 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 active:scale-98'
+          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            isSubirDemo
+              ? 'bg-amber-500 text-black border-amber-400'
+              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
           } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <ChevronsUp className="w-7 h-7 stroke-[2.2]" />
@@ -55,10 +55,10 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
           onClick={() => onCommand(6, 'BAJAR_BRAZO')}
           disabled={disabled}
           title="Bajar Brazo (J)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-100 cursor-pointer ${
-            isBajar
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-98'
-              : 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 active:scale-98'
+          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            isBajarDemo
+              ? 'bg-amber-500 text-black border-amber-400'
+              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
           } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <ChevronsDown className="w-7 h-7 stroke-[2.2]" />
@@ -73,10 +73,10 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
           onClick={() => onCommand(7, 'ABRIR_PALA')}
           disabled={disabled}
           title="Rotar Cabina Izquierda / Abrir Pala (H)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-100 cursor-pointer ${
-            isRotarIzq
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-98'
-              : 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 active:scale-98'
+          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            isRotarIzqDemo
+              ? 'bg-amber-500 text-black border-amber-400'
+              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
           } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <RotateCcw className="w-6 h-6 stroke-[2.2]" />
@@ -91,10 +91,10 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
           onClick={() => onCommand(8, 'CERRAR_PALA')}
           disabled={disabled}
           title="Rotar Cabina Derecha / Cerrar Pala (L)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-100 cursor-pointer ${
-            isRotarDer
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.5)] scale-98'
-              : 'bg-slate-800/90 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 active:scale-98'
+          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            isRotarDerDemo
+              ? 'bg-amber-500 text-black border-amber-400'
+              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
           } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
         >
           <RotateCw className="w-6 h-6 stroke-[2.2]" />

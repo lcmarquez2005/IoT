@@ -10,10 +10,21 @@ export function useVehicleWebSocket(idVehiculo: number) {
   const [eventLogs, setEventLogs] = useState<WSEventMessage[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
+  const heartbeatIntervalRef = useRef<number | null>(null);
   const isUnmountedRef = useRef(false);
 
   const connect = useCallback(() => {
     if (isUnmountedRef.current) return;
+
+    // Limpiar temporizadores anteriores
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    if (heartbeatIntervalRef.current) {
+      clearInterval(heartbeatIntervalRef.current);
+      heartbeatIntervalRef.current = null;
+    }
 
     if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
       wsRef.current.close();
@@ -31,6 +42,13 @@ export function useVehicleWebSocket(idVehiculo: number) {
       ws.onopen = () => {
         if (!isUnmountedRef.current) {
           setStatus('connected');
+
+          // Keep-alive heartbeat cada 15 segundos para evitar desconexiones por inactividad
+          heartbeatIntervalRef.current = window.setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send('ping');
+            }
+          }, 15000);
         }
       };
 
@@ -39,7 +57,7 @@ export function useVehicleWebSocket(idVehiculo: number) {
           const data: WSEventMessage = JSON.parse(event.data);
           if (!isUnmountedRef.current) {
             setLastMessage(data);
-            setEventLogs((prev) => [data, ...prev.slice(0, 99)]); // Mantener los últimos 100
+            setEventLogs((prev) => [data, ...prev.slice(0, 99)]);
           }
         } catch (err) {
           console.error('[WS Parse Error]:', err);
@@ -54,12 +72,17 @@ export function useVehicleWebSocket(idVehiculo: number) {
       };
 
       ws.onclose = () => {
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+
         if (!isUnmountedRef.current) {
           setStatus('disconnected');
-          // Auto-reconnect cada 3.5 segundos
+          // Reintento limpio de reconexión tras 4 segundos solo si no se desmontó
           reconnectTimeoutRef.current = window.setTimeout(() => {
             connect();
-          }, 3500);
+          }, 4000);
         }
       };
     } catch (err) {
@@ -67,7 +90,7 @@ export function useVehicleWebSocket(idVehiculo: number) {
       setStatus('error');
       reconnectTimeoutRef.current = window.setTimeout(() => {
         connect();
-      }, 4000);
+      }, 5000);
     }
   }, [idVehiculo]);
 
@@ -86,6 +109,7 @@ export function useVehicleWebSocket(idVehiculo: number) {
 
     return () => {
       isUnmountedRef.current = true;
+      if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) {
         wsRef.current.close();

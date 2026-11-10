@@ -17,10 +17,9 @@ export function App() {
 
   const [keyboardEnabled, setKeyboardEnabled] = useState(true);
   const [vehicleConnected, setVehicleConnected] = useState(false);
-  const [activeCommand, setActiveCommand] = useState<string | null>(null);
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
-  // Hook del WebSocket
+  // Hook del WebSocket con keep-alive
   const { status: wsStatus, lastMessage, eventLogs, reconnect, clearLogs } = useVehicleWebSocket(vehiculoId);
 
   // Guardar ID en localStorage
@@ -28,13 +27,13 @@ export function App() {
     localStorage.setItem('IOT_VEHICULO_ID', String(vehiculoId));
   }, [vehiculoId]);
 
-  // Consultar estado en base de datos
+  // Consultar estado en base de datos cada 5 segundos
   useEffect(() => {
     let interval: number;
     const fetchStatus = () => {
       obtenerEstadoVehiculo(vehiculoId)
         .then((res) => {
-          setVehicleConnected(res.conectado);
+          setVehicleConnected(Boolean(res.conectado));
         })
         .catch(() => {
           setVehicleConnected(false);
@@ -42,28 +41,20 @@ export function App() {
     };
 
     fetchStatus();
-    interval = window.setInterval(fetchStatus, 4000);
+    interval = window.setInterval(fetchStatus, 5000);
     return () => clearInterval(interval);
   }, [vehiculoId]);
 
-  // Actualizar estado si llega evento por WS
+  // Actualizar bandera 'conectado' cuando llegue evento WS sin animar botones
   useEffect(() => {
-    if (lastMessage) {
-      if (typeof lastMessage.conectado === 'boolean') {
-        setVehicleConnected(lastMessage.conectado);
-      }
-      if (lastMessage.comando) {
-        setActiveCommand(lastMessage.comando);
-        const timer = setTimeout(() => setActiveCommand(null), 800);
-        return () => clearTimeout(timer);
-      }
+    if (lastMessage && typeof lastMessage.conectado === 'boolean') {
+      setVehicleConnected(lastMessage.conectado);
     }
   }, [lastMessage]);
 
-  // Manejador centralizado para enviar comandos
+  // Manejador de envío de comandos (sin animaciones automáticas)
   const handleSendCommand = useCallback(
     async (codigo: number, nombre: string) => {
-      setActiveCommand(nombre);
       try {
         await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
       } catch (err: any) {
@@ -84,8 +75,11 @@ export function App() {
     enabled: keyboardEnabled,
   });
 
-  // Progreso de rutina DEMO en vivo desde eventos WebSocket
-  const demoProgress = lastMessage && lastMessage.evento === 'DEMO_MOVIMIENTO'
+  // Comando activo ÚNICAMENTE durante una rutina DEMO
+  const isDemoExecuting = lastMessage?.evento === 'DEMO_MOVIMIENTO';
+  const demoCommand = isDemoExecuting ? (lastMessage?.comando || null) : null;
+
+  const demoProgress = lastMessage && (lastMessage.evento === 'DEMO_MOVIMIENTO' || lastMessage.evento === 'DEMO_INICIO')
     ? {
         demo: lastMessage.demo || 'Demo Activa',
         pasoActual: lastMessage.paso_actual || 0,
@@ -107,7 +101,7 @@ export function App() {
         setKeyboardEnabled={setKeyboardEnabled}
       />
 
-      {/* Notificación flotante */}
+      {/* Notificación flotante de error */}
       {notification && (
         <div className="fixed top-16 right-4 z-50 animate-in fade-in slide-in-from-top-2">
           <div
@@ -129,19 +123,18 @@ export function App() {
           {/* Col 1: Navegación y Orugas */}
           <DriveControls
             onCommand={handleSendCommand}
-            activeCommand={activeCommand}
+            demoCommand={demoCommand}
           />
 
           {/* Col 2: Brazo y Torre */}
           <ArmControls
             onCommand={handleSendCommand}
-            activeCommand={activeCommand}
+            demoCommand={demoCommand}
           />
 
           {/* Col 3: Auxiliares y Parada de Emergencia */}
           <AuxiliaryActions
             onCommand={handleSendCommand}
-            activeCommand={activeCommand}
           />
         </div>
 
@@ -167,7 +160,7 @@ export function App() {
         </div>
       </main>
 
-      {/* Footer de Estado y Atajos */}
+      {/* Footer de Atajos */}
       <footer className="border-t border-slate-900 bg-slate-950/80 px-4 py-3 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <span>Control Remoto por WSS • 74HC595 + Optoacopladores • AWS EC2 & RDS</span>

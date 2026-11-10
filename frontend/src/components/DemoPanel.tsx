@@ -168,7 +168,7 @@ export const DemoPanel: React.FC<DemoPanelProps> = ({
         <div className="mb-4 bg-slate-950/80 border border-amber-500/20 rounded-xl p-3.5 animate-in fade-in">
           <div className="flex justify-between items-center text-xs mb-1.5 font-mono">
             <span className="text-amber-400 font-semibold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
               Ejecutando: {demoProgress?.demo || 'DEMO Activa'}
             </span>
             <span className="text-slate-400">

@@ -1,10 +1,17 @@
 import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
 
-// Si no está definido o estamos en localhost, usar proxy /api para evitar bloqueos de CORS
 const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
+    // En localhost, priorizar el proxy /api para evitar problemas de CORS y certificados auto-firmados
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const saved = localStorage.getItem('IOT_API_BASE_URL');
+      if (saved && !saved.includes('amazonaws.com')) {
+        return saved.replace(/\/$/, '');
+      }
+      return '/api';
+    }
     const saved = localStorage.getItem('IOT_API_BASE_URL');
     if (saved) return saved.replace(/\/$/, '');
   }
@@ -19,13 +26,20 @@ export function setApiBaseUrl(url: string): void {
 
 export function getWsBaseUrl(): string {
   if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const saved = localStorage.getItem('IOT_WS_BASE_URL');
+      if (saved && !saved.includes('amazonaws.com')) {
+        return saved.replace(/\/$/, '');
+      }
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}`;
+    }
     const saved = localStorage.getItem('IOT_WS_BASE_URL');
     if (saved) return saved.replace(/\/$/, '');
   }
 
   const api = getApiBaseUrl();
 
-  // Si estamos usando proxy relativo (/api o similar)
   if (api.startsWith('/') || api === '') {
     if (typeof window !== 'undefined') {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';

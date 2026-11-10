@@ -3,13 +3,11 @@ import { Lightbulb, Music, Power, OctagonAlert } from 'lucide-react';
 
 interface AuxiliaryActionsProps {
   onCommand: (codigo: number, nombre: string) => void;
-  activeCommand?: string | null;
   disabled?: boolean;
 }
 
 export const AuxiliaryActions: React.FC<AuxiliaryActionsProps> = ({
   onCommand,
-  activeCommand,
   disabled = false,
 }) => {
   return (
@@ -23,15 +21,15 @@ export const AuxiliaryActions: React.FC<AuxiliaryActionsProps> = ({
         </div>
       </div>
 
-      {/* Botón de Parada de Emergencia - Destacado en Rojo */}
+      {/* Botón de Parada de Emergencia */}
       <div className="mb-4">
         <button
           onClick={() => onCommand(9, 'DETENER')}
           disabled={disabled}
           title="Parada Inmediata (Espacio)"
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-rose-600 hover:from-rose-500 hover:to-rose-500 text-white font-bold flex items-center justify-center gap-3 shadow-[0_0_25px_rgba(244,63,94,0.35)] border border-rose-400/40 active:scale-98 transition-all cursor-pointer group"
+          className="w-full py-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center justify-center gap-3 border border-rose-400/40 active:scale-98 transition-all cursor-pointer"
         >
-          <OctagonAlert className="w-6 h-6 stroke-[2.3] group-hover:animate-pulse" />
+          <OctagonAlert className="w-6 h-6 stroke-[2.3]" />
           <div className="text-left leading-tight">
             <div className="text-sm uppercase tracking-wider font-extrabold">
               Paro de Emergencia
@@ -50,15 +48,11 @@ export const AuxiliaryActions: React.FC<AuxiliaryActionsProps> = ({
           onClick={() => onCommand(12, 'TOGGLE_LIGHT')}
           disabled={disabled}
           title="Alternar Luces LED (3)"
-          className={`py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeCommand === 'TOGGLE_LIGHT'
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/40 active:scale-95'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+          className="py-3 px-2 rounded-xl border bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/40 hover:text-white active:bg-amber-500 active:text-black active:scale-95 transition-all cursor-pointer"
         >
-          <Lightbulb className="w-5 h-5" />
-          <span className="text-[11px] font-semibold">Faros</span>
-          <span className="text-[9px] font-mono text-slate-400">[3]</span>
+          <Lightbulb className="w-5 h-5 mx-auto mb-1" />
+          <span className="text-[11px] font-semibold block text-center">Faros</span>
+          <span className="text-[9px] font-mono text-slate-400 block text-center">[3]</span>
         </button>
 
         {/* SONIDO / MUSICA */}
@@ -66,15 +60,11 @@ export const AuxiliaryActions: React.FC<AuxiliaryActionsProps> = ({
           onClick={() => onCommand(11, 'TOGGLE_MUSIC')}
           disabled={disabled}
           title="Alternar Sonido / Música (2)"
-          className={`py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeCommand === 'TOGGLE_MUSIC'
-              ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.4)]'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/40 active:scale-95'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+          className="py-3 px-2 rounded-xl border bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/40 hover:text-white active:bg-amber-500 active:text-black active:scale-95 transition-all cursor-pointer"
         >
-          <Music className="w-5 h-5" />
-          <span className="text-[11px] font-semibold">Sonido</span>
-          <span className="text-[9px] font-mono text-slate-400">[2]</span>
+          <Music className="w-5 h-5 mx-auto mb-1" />
+          <span className="text-[11px] font-semibold block text-center">Sonido</span>
+          <span className="text-[9px] font-mono text-slate-400 block text-center">[2]</span>
         </button>
 
         {/* ENCENDIDO / POWER */}
@@ -82,15 +72,11 @@ export const AuxiliaryActions: React.FC<AuxiliaryActionsProps> = ({
           onClick={() => onCommand(10, 'ENCENDER')}
           disabled={disabled}
           title="Encender Control Remoto (1)"
-          className={`py-3 px-2 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            activeCommand === 'ENCENDER'
-              ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-cyan-500/40 active:scale-95'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+          className="py-3 px-2 rounded-xl border bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-cyan-500/40 hover:text-white active:bg-cyan-500 active:text-black active:scale-95 transition-all cursor-pointer"
         >
-          <Power className="w-5 h-5" />
-          <span className="text-[11px] font-semibold">Remoto</span>
-          <span className="text-[9px] font-mono text-slate-400">[1]</span>
+          <Power className="w-5 h-5 mx-auto mb-1" />
+          <span className="text-[11px] font-semibold block text-center">Remoto</span>
+          <span className="text-[9px] font-mono text-slate-400 block text-center">[1]</span>
         </button>
       </div>
     </div>
