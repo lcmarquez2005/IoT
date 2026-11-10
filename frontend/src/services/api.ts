@@ -3,20 +3,13 @@ import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecu
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_API_BASE_URL');
-    if (saved && saved.trim() !== '') {
+    // Si el usuario configuró una URL manual explícita (que no sea amazonaws.com ni vacía)
+    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com') && saved !== '/api') {
       return saved.replace(/\/$/, '');
     }
-
-    // En localhost usamos el proxy /api para evitar problemas de CORS
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return '/api';
-    }
-
-    // En Vercel podemos usar /api (gestionado por vercel.json rewrite) o la URL de AWS
-    const envUrl = import.meta.env.VITE_API_BASE_URL;
-    if (envUrl && envUrl.trim() !== '') return envUrl.replace(/\/$/, '');
-    return 'https://ec2-100-50-120-115.compute-1.amazonaws.com';
   }
+
+  // SIEMPRE usar /api por defecto (en local con Vite proxy y en Vercel con proxy Serverless/Rewrites)
   return '/api';
 }
 
@@ -39,7 +32,7 @@ export function getWsBaseUrl(): string {
       return `${protocol}//${window.location.host}`;
     }
 
-    // En Vercel / producción, el navegador se conecta directamente al WebSocket seguro de AWS EC2
+    // En Vercel / producción, el navegador se conecta al WebSocket seguro de AWS EC2
     const envWs = import.meta.env.VITE_WS_BASE_URL;
     if (envWs && envWs.trim() !== '') return envWs.replace(/\/$/, '');
     return 'wss://ec2-100-50-120-115.compute-1.amazonaws.com';
