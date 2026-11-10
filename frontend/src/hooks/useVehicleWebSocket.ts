@@ -26,8 +26,17 @@ export function useVehicleWebSocket(idVehiculo: number) {
       heartbeatIntervalRef.current = null;
     }
 
-    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
-      wsRef.current.close();
+    // Cerrar socket previo asegurando no disparar onclose no deseado
+    if (wsRef.current) {
+      const oldWs = wsRef.current;
+      wsRef.current = null;
+      oldWs.onclose = null;
+      oldWs.onerror = null;
+      oldWs.onmessage = null;
+      oldWs.onopen = null;
+      if (oldWs.readyState === WebSocket.OPEN || oldWs.readyState === WebSocket.CONNECTING) {
+        oldWs.close();
+      }
     }
 
     const wsBase = getWsBaseUrl();
@@ -40,28 +49,27 @@ export function useVehicleWebSocket(idVehiculo: number) {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        if (!isUnmountedRef.current) {
-          setStatus('connected');
+        if (isUnmountedRef.current || wsRef.current !== ws) return;
 
-          // Keep-alive heartbeat cada 15 segundos
-          heartbeatIntervalRef.current = window.setInterval(() => {
-            if (ws.readyState === WebSocket.OPEN) {
-              ws.send('ping');
-            }
-          }, 15000);
-        }
+        setStatus('connected');
+
+        // Heartbeat cada 15 segundos
+        heartbeatIntervalRef.current = window.setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send('ping');
+          }
+        }, 15000);
       };
 
       ws.onmessage = (event) => {
+        if (isUnmountedRef.current || wsRef.current !== ws) return;
+
         try {
           const data: WSEventMessage = JSON.parse(event.data);
-          if (!isUnmountedRef.current) {
-            setLastMessage(data);
-            // IMPORTANTE: No saturar el historial de eventos con el handshake ESTADO_INICIAL
-            // Solo registrar eventos de acciones reales (movimientos, inicio/fin de demo, cancelaciones)
-            if (data.evento !== 'ESTADO_INICIAL') {
-              setEventLogs((prev) => [data, ...prev.slice(0, 99)]);
-            }
+          setLastMessage(data);
+          // Filtrar ESTADO_INICIAL del feed para no confundir con comandos nuevos
+          if (data.evento !== 'ESTADO_INICIAL') {
+            setEventLogs((prev) => [data, ...prev.slice(0, 99)]);
           }
         } catch (err) {
           console.error('[WS Parse Error]:', err);
@@ -69,11 +77,9 @@ export function useVehicleWebSocket(idVehiculo: number) {
       };
 
       ws.onerror = (err) => {
-        const wsObj = err.target as WebSocket;
-        console.warn(`[WS Error] Fallo en conexión a ${wsObj?.url || wsUrl}:`, err);
-        if (!isUnmountedRef.current) {
-          setStatus('error');
-        }
+        if (isUnmountedRef.current || wsRef.current !== ws) return;
+        console.warn(`[WS Error] Fallo al conectar con ${wsUrl}:`, err);
+        setStatus('error');
       };
 
       ws.onclose = () => {
@@ -82,13 +88,16 @@ export function useVehicleWebSocket(idVehiculo: number) {
           heartbeatIntervalRef.current = null;
         }
 
-        if (!isUnmountedRef.current) {
-          setStatus('disconnected');
-          // Reintento limpio de reconexión tras 4 segundos
-          reconnectTimeoutRef.current = window.setTimeout(() => {
-            connect();
-          }, 4000);
+        // Si este socket ya no es el activo o el componente se desmontó, ignorar
+        if (isUnmountedRef.current || wsRef.current !== ws) {
+          return;
         }
+
+        setStatus('disconnected');
+        // Reintento limpio de reconexión tras 4 segundos
+        reconnectTimeoutRef.current = window.setTimeout(() => {
+          connect();
+        }, 4000);
       };
     } catch (err) {
       console.error('[WS Init Error]:', err);
@@ -117,7 +126,15 @@ export function useVehicleWebSocket(idVehiculo: number) {
       if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current);
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (wsRef.current) {
-        wsRef.current.close();
+        const ws = wsRef.current;
+        wsRef.current = null;
+        ws.onclose = null;
+        ws.onerror = null;
+        ws.onmessage = null;
+        ws.onopen = null;
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close();
+        }
       }
     };
   }, [connect]);

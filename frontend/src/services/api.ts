@@ -1,23 +1,21 @@
 import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
 
-// Limpieza automática de claves antiguas de localStorage que causen errores de CORS / SSL
-if (typeof window !== 'undefined') {
-  const oldApi = localStorage.getItem('IOT_API_BASE_URL');
-  if (oldApi && oldApi.includes('amazonaws.com')) {
-    localStorage.removeItem('IOT_API_BASE_URL');
-  }
-  const oldWs = localStorage.getItem('IOT_WS_BASE_URL');
-  if (oldWs && oldWs.includes('amazonaws.com')) {
-    localStorage.removeItem('IOT_WS_BASE_URL');
-  }
-}
-
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_API_BASE_URL');
-    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com')) {
+    if (saved && saved.trim() !== '') {
       return saved.replace(/\/$/, '');
     }
+
+    // En localhost usamos el proxy /api para evitar problemas de CORS
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return '/api';
+    }
+
+    // En Vercel podemos usar /api (gestionado por vercel.json rewrite) o la URL de AWS
+    const envUrl = import.meta.env.VITE_API_BASE_URL;
+    if (envUrl && envUrl.trim() !== '') return envUrl.replace(/\/$/, '');
+    return 'https://ec2-100-50-120-115.compute-1.amazonaws.com';
   }
   return '/api';
 }
@@ -31,11 +29,20 @@ export function setApiBaseUrl(url: string): void {
 export function getWsBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_WS_BASE_URL');
-    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com')) {
+    if (saved && saved.trim() !== '') {
       return saved.replace(/\/$/, '');
     }
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}`;
+
+    // En localhost usamos el proxy de Vite
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${window.location.host}`;
+    }
+
+    // En Vercel / producción, el navegador se conecta directamente al WebSocket seguro de AWS EC2
+    const envWs = import.meta.env.VITE_WS_BASE_URL;
+    if (envWs && envWs.trim() !== '') return envWs.replace(/\/$/, '');
+    return 'wss://ec2-100-50-120-115.compute-1.amazonaws.com';
   }
   return 'ws://localhost:3000';
 }
