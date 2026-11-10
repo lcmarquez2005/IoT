@@ -3,7 +3,15 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!api/).*)",
+      "source": "/api/:match*",
+      "destination": "/api/proxy?__subpath=:match*"
+    },
+    {
+      "source": "/api",
+      "destination": "/api/proxy"
+    },
+    {
+      "source": "/((?!api).*)",
       "destination": "/index.html"
     }
   ]

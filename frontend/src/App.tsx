@@ -7,7 +7,9 @@ import { DemoPanel } from './components/DemoPanel';
 import { TelemetryLog } from './components/TelemetryLog';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
-import { enviarMovimiento, obtenerEstadoVehiculo } from './services/api';
+import { enviarMovimiento, obtenerEstadoVehiculo, isLocalEnvironment } from './services/api';
+import { ShieldAlert, ExternalLink, X } from 'lucide-react';
+import { WSEventMessage } from './types/vehicle';
 
 export function App() {
   const [vehiculoId, setVehiculoId] = useState<number>(() => {
@@ -18,6 +20,8 @@ export function App() {
   const [keyboardEnabled, setKeyboardEnabled] = useState(true);
   const [vehicleConnected, setVehicleConnected] = useState(false);
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [dismissSslBanner, setDismissSslBanner] = useState(false);
+  const [localLogs, setLocalLogs] = useState<WSEventMessage[]>([]);
 
   // Hook del WebSocket con keep-alive
   const { status: wsStatus, lastMessage, eventLogs, reconnect, clearLogs } = useVehicleWebSocket(vehiculoId);
@@ -27,7 +31,7 @@ export function App() {
     localStorage.setItem('IOT_VEHICULO_ID', String(vehiculoId));
   }, [vehiculoId]);
 
-  // Consultar estado en base de datos cada 5 segundos
+  // Consultar estado en base de datos periódicamente (cada 4s)
   useEffect(() => {
     let interval: number;
     const fetchStatus = () => {
@@ -41,22 +45,36 @@ export function App() {
     };
 
     fetchStatus();
-    interval = window.setInterval(fetchStatus, 5000);
+    interval = window.setInterval(fetchStatus, 4000);
     return () => clearInterval(interval);
   }, [vehiculoId]);
 
-  // Actualizar bandera 'conectado' cuando llegue evento WS sin animar botones
+  // Actualizar bandera 'conectado' cuando llegue evento WS
   useEffect(() => {
     if (lastMessage && typeof lastMessage.conectado === 'boolean') {
       setVehicleConnected(lastMessage.conectado);
     }
   }, [lastMessage]);
 
-  // Manejador de envío de comandos (sin animaciones automáticas)
+  // Manejador de envío de comandos
   const handleSendCommand = useCallback(
     async (codigo: number, nombre: string) => {
       try {
-        await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
+        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
+        
+        // Si el WS no estuviera conectado en este instante, registrar en el log local para feedback inmediato
+        if (wsStatus !== 'connected' && res) {
+          const mockMsg: WSEventMessage = {
+            evento: 'MOVIMIENTO_INDIVIDUAL',
+            id_vehiculo: vehiculoId,
+            comando: res.comando || nombre,
+            codigo: res.codigo || codigo,
+            origen: res.origen || 'REACT_DASHBOARD',
+            conectado: res.conectado ?? true,
+            timestamp: new Date().toISOString(),
+          };
+          setLocalLogs((prev) => [mockMsg, ...prev.slice(0, 49)]);
+        }
       } catch (err: any) {
         console.error('Error enviando comando:', err);
         setNotification({
@@ -66,8 +84,16 @@ export function App() {
         setTimeout(() => setNotification(null), 3500);
       }
     },
-    [vehiculoId]
+    [vehiculoId, wsStatus]
   );
+
+  // Combinar logs de WS con logs locales si los hay
+  const combinedLogs = [...localLogs, ...eventLogs].slice(0, 100);
+
+  const handleClearLogs = useCallback(() => {
+    clearLogs();
+    setLocalLogs([]);
+  }, [clearLogs]);
 
   // Teclado físico
   useKeyboardControls({
@@ -88,6 +114,8 @@ export function App() {
       }
     : null;
 
+  const showSslNotice = !isLocalEnvironment() && wsStatus !== 'connected' && !dismissSslBanner;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       {/* Header con Estado y Configuración */}
@@ -100,6 +128,38 @@ export function App() {
         keyboardEnabled={keyboardEnabled}
         setKeyboardEnabled={setKeyboardEnabled}
       />
+
+      {/* Banner de Aviso de Certificado SSL de AWS para producción */}
+      {showSslNotice && (
+        <div className="bg-amber-950/70 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-200">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>
+                <strong>¿WSS desconectado en Vercel?</strong> AWS EC2 usa un certificado SSL auto-firmado. Para que el navegador permita la conexión WebSocket segura en vivo, abre este enlace y pulsa <em className="text-white font-medium">"Avanzado → Continuar a ec2... (no seguro)"</em>:
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <a
+                href="https://ec2-100-50-120-115.compute-1.amazonaws.com/docs"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg transition-colors shadow text-xs"
+              >
+                Autorizar Certificado AWS
+                <ExternalLink className="w-3 h-3" />
+              </a>
+              <button
+                onClick={() => setDismissSslBanner(true)}
+                className="p-1 text-amber-400/70 hover:text-white"
+                title="Cerrar aviso"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Notificación flotante de error */}
       {notification && (
@@ -152,8 +212,8 @@ export function App() {
           <div className="lg:col-span-7">
             <TelemetryLog
               vehiculoId={vehiculoId}
-              eventLogs={eventLogs}
-              onClearLogs={clearLogs}
+              eventLogs={combinedLogs}
+              onClearLogs={handleClearLogs}
               lastMessage={lastMessage}
             />
           </div>

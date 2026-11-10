@@ -1,5 +1,20 @@
 import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
 
+export function isLocalEnvironment(): boolean {
+  if (typeof window === 'undefined') return true;
+  const h = window.location.hostname;
+  return (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h.startsWith('192.168.') ||
+    h.startsWith('10.') ||
+    h.startsWith('172.') ||
+    h.endsWith('.local') ||
+    window.location.port === '3000' ||
+    window.location.port === '5173'
+  );
+}
+
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_API_BASE_URL');
@@ -26,8 +41,8 @@ export function getWsBaseUrl(): string {
       return saved.replace(/\/$/, '');
     }
 
-    // En localhost usamos el proxy de Vite
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    // En localhost o red local (IP LAN), usamos el proxy de WebSocket de Vite
+    if (isLocalEnvironment()) {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       return `${protocol}//${window.location.host}`;
     }
