@@ -72,7 +72,8 @@ export class VirtualJoystick {
     let dx = e.clientX - centerX;
     let dy = e.clientY - centerY;
 
-    const maxR = (rect.width / 2) - 38; // Limita movimiento dentro del anillo
+    const handleRadius = (this.handle.offsetWidth || 70) / 2;
+    const maxR = (rect.width / 2) - handleRadius; // Limita movimiento dinámicamente dentro del anillo
     const distance = Math.hypot(dx, dy);
 
     // Limitar pomo al perímetro del círculo

@@ -78,9 +78,57 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 9. Configuración modal (Endpoints y Vehículo)
   initSettingsModal(statusManager);
 
-  // 10. Soporte opcional de teclado ergonómico
+  // 10. Botón de Pantalla Completa y Orientación (Mobile First)
+  initFullscreen();
+
+  // 11. Soporte opcional de teclado ergonómico
   initKeyboardControls();
 });
+
+/**
+ * Gestión de Pantalla Completa (Mobile First)
+ */
+function initFullscreen() {
+  const btn = document.getElementById('btn-fullscreen');
+  const icon = document.getElementById('fullscreen-icon');
+
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (!document.fullscreenElement) {
+        try {
+          if (document.documentElement.requestFullscreen) {
+            await document.documentElement.requestFullscreen();
+          } else if (document.documentElement.webkitRequestFullscreen) {
+            await document.documentElement.webkitRequestFullscreen();
+          }
+          // Intento de bloqueo en horizontal para celulares
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        } catch (err) {
+          console.warn('[Pantalla Completa]:', err.message);
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen().catch(() => {});
+        }
+      }
+    });
+  }
+
+  const handleFsChange = () => {
+    const isFs = Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+    if (icon) {
+      icon.className = isFs ? 'bi bi-fullscreen-exit' : 'bi bi-arrows-fullscreen';
+    }
+    document.body.classList.toggle('is-fullscreen', isFs);
+  };
+
+  document.addEventListener('fullscreenchange', handleFsChange);
+  document.addEventListener('webkitfullscreenchange', handleFsChange);
+}
 
 /**
  * Gestión del modal de configuración de endpoints

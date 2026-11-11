@@ -41,9 +41,10 @@ export const COMMAND_NAMES = Object.entries(COMMANDS).reduce((acc, [name, code])
  * Obtiene la configuración activa (persistida en localStorage o por defecto)
  */
 export function getActiveConfig() {
-  const savedApi = localStorage.getItem('IOT_CTRL_API_URL');
-  const savedWs = localStorage.getItem('IOT_CTRL_WS_URL');
-  const savedVehiculo = localStorage.getItem('IOT_CTRL_VEHICULO_ID');
+  const hasStorage = typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
+  const savedApi = hasStorage ? localStorage.getItem('IOT_CTRL_API_URL') : null;
+  const savedWs = hasStorage ? localStorage.getItem('IOT_CTRL_WS_URL') : null;
+  const savedVehiculo = hasStorage ? localStorage.getItem('IOT_CTRL_VEHICULO_ID') : null;
 
   return {
     apiBaseUrl: savedApi && savedApi.trim() !== '' ? savedApi.replace(/\/$/, '') : DEFAULT_CONFIG.apiBaseUrl,
