@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronsUp, ChevronsDown, RotateCcw, RotateCw } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, Maximize2, Minimize2 } from 'lucide-react';
 
 interface ArmControlsProps {
   onCommand: (codigo: number, nombre: string) => void;
@@ -14,101 +14,87 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
 }) => {
   const isSubirDemo = demoCommand === 'SUBIR_BRAZO';
   const isBajarDemo = demoCommand === 'BAJAR_BRAZO';
-  const isRotarIzqDemo = demoCommand === 'ABRIR_PALA' || demoCommand === 'ROTAR_IZQ';
-  const isRotarDerDemo = demoCommand === 'CERRAR_PALA' || demoCommand === 'ROTAR_DER';
+  const isAbrirDemo = demoCommand === 'ABRIR_PALA';
+  const isCerrarDemo = demoCommand === 'CERRAR_PALA';
 
   return (
-    <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 shadow-xl relative">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-200">
-            Brazo y Cabina
-          </h2>
-          <p className="text-xs text-slate-400">Elevación y rotación de torre</p>
-        </div>
-        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
-          Teclas H, J, K, L
+    <div className="flex flex-col items-center justify-center w-full select-none">
+      <div className="w-full text-center mb-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 font-mono">
+          Brazo y Pala (Pulgar Der.)
         </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-3.5 my-2">
-        {/* SUBIR BRAZO */}
+      {/* Cluster Ergonómico Gamepad (2x2 Grid) */}
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-[260px] sm:max-w-[280px]">
+        {/* SUBIR BRAZO (Código 5) */}
         <button
           onClick={() => onCommand(5, 'SUBIR_BRAZO')}
           disabled={disabled}
-          title="Subir Brazo (K)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          title="Subir Brazo Articulado (K)"
+          className={`h-20 sm:h-22 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-lg active:scale-95 ${
             isSubirDemo
-              ? 'bg-amber-500 text-black border-amber-400'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
+          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <ChevronsUp className="w-7 h-7 stroke-[2.2]" />
-          <div className="text-center">
-            <div className="text-xs font-bold leading-tight">Subir Brazo</div>
-            <span className="text-[10px] font-mono opacity-60">Tecla K</span>
-          </div>
+          <ArrowUpCircle className="w-7 h-7 text-amber-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-extrabold leading-tight">Subir Brazo</span>
+          <span className="text-[9px] font-mono text-slate-400">Cod 5</span>
         </button>
 
-        {/* BAJAR BRAZO */}
+        {/* BAJAR BRAZO (Código 6) */}
         <button
           onClick={() => onCommand(6, 'BAJAR_BRAZO')}
           disabled={disabled}
-          title="Bajar Brazo (J)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
+          title="Bajar Brazo Articulado (J)"
+          className={`h-20 sm:h-22 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-lg active:scale-95 ${
             isBajarDemo
-              ? 'bg-amber-500 text-black border-amber-400'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
+          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <ChevronsDown className="w-7 h-7 stroke-[2.2]" />
-          <div className="text-center">
-            <div className="text-xs font-bold leading-tight">Bajar Brazo</div>
-            <span className="text-[10px] font-mono opacity-60">Tecla J</span>
-          </div>
+          <ArrowDownCircle className="w-7 h-7 text-amber-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-extrabold leading-tight">Bajar Brazo</span>
+          <span className="text-[9px] font-mono text-slate-400">Cod 6</span>
         </button>
 
-        {/* ROTAR CABINA IZQ / ABRIR PALA */}
+        {/* ABRIR PALA (Código 7) */}
         <button
           onClick={() => onCommand(7, 'ABRIR_PALA')}
           disabled={disabled}
-          title="Rotar Cabina Izquierda / Abrir Pala (H)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            isRotarIzqDemo
-              ? 'bg-amber-500 text-black border-amber-400'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Abrir Pala / Cuchara (H)"
+          className={`h-20 sm:h-22 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-lg active:scale-95 ${
+            isAbrirDemo
+              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
+          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <RotateCcw className="w-6 h-6 stroke-[2.2]" />
-          <div className="text-center">
-            <div className="text-xs font-bold leading-tight">Giro Cabina Izq</div>
-            <span className="text-[10px] font-mono opacity-60">Tecla H</span>
-          </div>
+          <Maximize2 className="w-6 h-6 text-cyan-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-extrabold leading-tight">Abrir Pala</span>
+          <span className="text-[9px] font-mono text-slate-400">Cod 7</span>
         </button>
 
-        {/* ROTAR CABINA DER / CERRAR PALA */}
+        {/* CERRAR PALA (Código 8) */}
         <button
           onClick={() => onCommand(8, 'CERRAR_PALA')}
           disabled={disabled}
-          title="Rotar Cabina Derecha / Cerrar Pala (L)"
-          className={`h-24 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
-            isRotarDerDemo
-              ? 'bg-amber-500 text-black border-amber-400'
-              : 'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-amber-500/50 hover:text-white active:bg-amber-500 active:text-black active:scale-98'
-          } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+          title="Cerrar Pala / Cuchara (L)"
+          className={`h-20 sm:h-22 rounded-2xl border-2 flex flex-col items-center justify-center gap-1 transition-all cursor-pointer shadow-lg active:scale-95 ${
+            isCerrarDemo
+              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.6)]'
+              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
+          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <RotateCw className="w-6 h-6 stroke-[2.2]" />
-          <div className="text-center">
-            <div className="text-xs font-bold leading-tight">Giro Cabina Der</div>
-            <span className="text-[10px] font-mono opacity-60">Tecla L</span>
-          </div>
+          <Minimize2 className="w-6 h-6 text-cyan-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-extrabold leading-tight">Cerrar Pala</span>
+          <span className="text-[9px] font-mono text-slate-400">Cod 8</span>
         </button>
       </div>
 
-      <div className="flex justify-between items-center text-[11px] text-slate-500 mt-3 pt-3 border-t border-slate-800/60 font-mono">
-        <span>Canales: Salidas 12, 6, 8, 1</span>
-        <span>Aislamiento: PC817</span>
-      </div>
+      <span className="text-[10px] text-slate-400 mt-2 font-mono">
+        Botones Táctiles ≥ 48px
+      </span>
     </div>
   );
 };

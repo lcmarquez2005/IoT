@@ -1,14 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Header } from './components/Header';
-import { DriveControls } from './components/DriveControls';
+import { VirtualJoystick } from './components/VirtualJoystick';
 import { ArmControls } from './components/ArmControls';
-import { AuxiliaryActions } from './components/AuxiliaryActions';
-import { DemoPanel } from './components/DemoPanel';
+import { CenterConsole } from './components/CenterConsole';
 import { TelemetryLog } from './components/TelemetryLog';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { enviarMovimiento, obtenerEstadoVehiculo, isLocalEnvironment } from './services/api';
-import { ShieldAlert, ExternalLink, X } from 'lucide-react';
+import { ShieldAlert, ExternalLink, X, Smartphone } from 'lucide-react';
 import { WSEventMessage } from './types/vehicle';
 
 export function App() {
@@ -22,9 +21,40 @@ export function App() {
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [dismissSslBanner, setDismissSslBanner] = useState(false);
   const [localLogs, setLocalLogs] = useState<WSEventMessage[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Retroalimentación operativa compacta
+  const [lastAction, setLastAction] = useState<{ nombre: string; codigo: number } | null>(null);
+  const [lastHttpResult, setLastHttpResult] = useState<string | null>(null);
+  const [lastWsEvent, setLastWsEvent] = useState<string | null>(null);
 
   // Hook del WebSocket con keep-alive
   const { status: wsStatus, lastMessage, eventLogs, reconnect, clearLogs } = useVehicleWebSocket(vehiculoId);
+
+  // Detección de cambios de pantalla completa
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(Boolean(document.fullscreenElement));
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen()
+        .then(() => {
+          if (screen.orientation && (screen.orientation as any).lock) {
+            (screen.orientation as any).lock('landscape').catch(() => {});
+          }
+        })
+        .catch((err) => console.warn('Fullscreen no admitido:', err));
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  }, []);
 
   // Guardar ID en localStorage
   useEffect(() => {
@@ -49,19 +79,24 @@ export function App() {
     return () => clearInterval(interval);
   }, [vehiculoId]);
 
-  // Actualizar bandera 'conectado' cuando llegue evento WS
+  // Actualizar bandera 'conectado' y último evento WS
   useEffect(() => {
-    if (lastMessage && typeof lastMessage.conectado === 'boolean') {
-      setVehicleConnected(lastMessage.conectado);
+    if (lastMessage) {
+      if (typeof lastMessage.conectado === 'boolean') {
+        setVehicleConnected(lastMessage.conectado);
+      }
+      setLastWsEvent(`${lastMessage.evento} ${lastMessage.comando || ''} [${lastMessage.codigo ?? ''}]`);
     }
   }, [lastMessage]);
 
-  // Manejador de envío de comandos
+  // Manejador centralizado de envío de comandos
   const handleSendCommand = useCallback(
     async (codigo: number, nombre: string) => {
+      setLastAction({ nombre, codigo });
       try {
         const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
-        
+        setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
+
         // Si el WS no estuviera conectado en este instante, registrar en el log local para feedback inmediato
         if (wsStatus !== 'connected' && res) {
           const mockMsg: WSEventMessage = {
@@ -77,6 +112,7 @@ export function App() {
         }
       } catch (err: any) {
         console.error('Error enviando comando:', err);
+        setLastHttpResult(`Error: ${err.message}`);
         setNotification({
           msg: err.message || `Fallo al enviar comando ${nombre}`,
           type: 'error',
@@ -117,8 +153,8 @@ export function App() {
   const showSslNotice = !isLocalEnvironment() && wsStatus !== 'connected' && !dismissSslBanner;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      {/* Header con Estado y Configuración */}
+    <div className={`min-h-screen flex flex-col bg-slate-950 text-slate-100 ${isFullscreen ? 'h-screen overflow-hidden' : ''}`}>
+      {/* Header con Estado, Indicadores y Botón Fullscreen */}
       <Header
         wsStatus={wsStatus}
         vehicleConnected={vehicleConnected}
@@ -127,16 +163,18 @@ export function App() {
         setVehiculoId={setVehiculoId}
         keyboardEnabled={keyboardEnabled}
         setKeyboardEnabled={setKeyboardEnabled}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={handleToggleFullscreen}
       />
 
       {/* Banner de Aviso de Certificado SSL de AWS para producción */}
       {showSslNotice && (
-        <div className="bg-amber-950/70 border-b border-amber-500/30 px-4 py-2.5 text-xs text-amber-200">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
+        <div className="bg-amber-950/70 border-b border-amber-500/30 px-3 py-2 text-xs text-amber-200">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
               <span>
-                <strong>¿WSS desconectado en Vercel?</strong> AWS EC2 usa un certificado SSL auto-firmado. Para que el navegador permita la conexión WebSocket segura en vivo, abre este enlace y pulsa <em className="text-white font-medium">"Avanzado → Continuar a ec2... (no seguro)"</em>:
+                <strong>¿WSS desconectado en Vercel?</strong> AWS EC2 usa certificado auto-firmado:
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -144,7 +182,7 @@ export function App() {
                 href="https://ec2-100-50-120-115.compute-1.amazonaws.com/docs"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-lg transition-colors shadow text-xs"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded text-xs transition-colors shadow"
               >
                 Autorizar Certificado AWS
                 <ExternalLink className="w-3 h-3" />
@@ -163,12 +201,12 @@ export function App() {
 
       {/* Notificación flotante de error */}
       {notification && (
-        <div className="fixed top-16 right-4 z-50 animate-in fade-in slide-in-from-top-2">
+        <div className="fixed top-14 right-4 z-50 animate-in fade-in slide-in-from-top-2">
           <div
-            className={`px-4 py-2.5 rounded-xl border text-xs font-semibold shadow-2xl flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-xl border text-xs font-semibold shadow-2xl flex items-center gap-2 ${
               notification.type === 'error'
-                ? 'bg-rose-950/90 text-rose-300 border-rose-500/30'
-                : 'bg-emerald-950/90 text-emerald-300 border-emerald-500/30'
+                ? 'bg-rose-950/95 text-rose-300 border-rose-500/40'
+                : 'bg-emerald-950/95 text-emerald-300 border-emerald-500/40'
             }`}
           >
             {notification.msg}
@@ -176,59 +214,71 @@ export function App() {
         </div>
       )}
 
-      {/* Contenido Principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Grilla Superior de Controles Principales */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Col 1: Navegación y Orugas */}
-          <DriveControls
-            onCommand={handleSendCommand}
-            demoCommand={demoCommand}
-          />
+      {/* Contenido Principal: Chasis de Control Remoto Gamepad (Mobile First) */}
+      <main className="flex-1 w-full max-w-7xl mx-auto p-2 sm:p-4 flex flex-col justify-center">
+        <div className="bg-slate-900/80 border-2 border-slate-800/90 rounded-3xl p-3 sm:p-5 shadow-2xl backdrop-blur-md">
+          {/* Tip móvil de orientación (solo visible en pantallas verticales estrechas) */}
+          <div className="sm:hidden text-center mb-1 text-[10px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
+            <Smartphone className="w-3 h-3" />
+            <span>Gira tu celular o pulsa Pantalla Completa para modo control remoto</span>
+          </div>
 
-          {/* Col 2: Brazo y Torre */}
-          <ArmControls
-            onCommand={handleSendCommand}
-            demoCommand={demoCommand}
-          />
+          {/* Grilla Gamepad: IZQUIERDA (Joystick) | CENTRO (Consola/Comodines/Paro) | DERECHA (Brazo/Pala) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center justify-items-center">
+            {/* 1. FLANCO IZQUIERDO: Joystick de Tracción (Orugas 1-4) */}
+            <div className="w-full flex flex-col items-center justify-center py-1">
+              <VirtualJoystick
+                onCommand={handleSendCommand}
+                demoCommand={demoCommand}
+                disabled={isDemoExecuting}
+              />
+            </div>
 
-          {/* Col 3: Auxiliares y Parada de Emergencia */}
-          <AuxiliaryActions
-            onCommand={handleSendCommand}
-          />
+            {/* 2. CONSOLA CENTRAL: Encendido, Comodines (Luces/Música), Parada de Emergencia y DEMO */}
+            <div className="w-full flex flex-col items-center justify-center py-1">
+              <CenterConsole
+                vehiculoId={vehiculoId}
+                onCommand={handleSendCommand}
+                demoProgress={demoProgress}
+                lastAction={lastAction}
+                lastHttpResult={lastHttpResult}
+                lastWsEvent={lastWsEvent}
+                disabled={isDemoExecuting}
+              />
+            </div>
+
+            {/* 3. FLANCO DERECHO: Clúster de Brazo y Pala (Pulgar Derecho) */}
+            <div className="w-full flex flex-col items-center justify-center py-1">
+              <ArmControls
+                onCommand={handleSendCommand}
+                demoCommand={demoCommand}
+                disabled={isDemoExecuting}
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Grilla Inferior: Automatización DEMO y Telemetría */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* DEMO Panel */}
-          <div className="lg:col-span-5">
-            <DemoPanel
-              vehiculoId={vehiculoId}
-              demoProgress={demoProgress}
-            />
-          </div>
-
-          {/* Telemetría y Log */}
-          <div className="lg:col-span-7">
-            <TelemetryLog
-              vehiculoId={vehiculoId}
-              eventLogs={combinedLogs}
-              onClearLogs={handleClearLogs}
-              lastMessage={lastMessage}
-            />
-          </div>
+        {/* Panel secundario de Telemetría expandible en pantallas medianas/grandes */}
+        <div className="mt-4 hidden lg:block">
+          <TelemetryLog
+            vehiculoId={vehiculoId}
+            eventLogs={combinedLogs}
+            onClearLogs={handleClearLogs}
+            lastMessage={lastMessage}
+          />
         </div>
       </main>
 
-      {/* Footer de Atajos */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 px-4 py-3 text-center text-xs text-slate-500 font-mono">
+      {/* Footer de Créditos */}
+      <footer className="border-t border-slate-900 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-500 font-mono">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <span>Control Remoto por WSS • 74HC595 + Optoacopladores • AWS EC2 & RDS</span>
-          <div className="flex gap-4">
-            <span>[W,A,S,D] Orugas</span>
-            <span>[H,J,K,L] Brazo</span>
+          <span>Desarrollado por <strong>Luis Carlos Márquez Strociak</strong> · 2026</span>
+          <div className="flex gap-4 opacity-75">
+            <span>[WASD] Joystick</span>
             <span>[Espacio] Paro</span>
-            <span>[1,2,3] Auxiliares</span>
+            <span>[1] Power</span>
+            <span>[2] Música</span>
+            <span>[3] Luz</span>
           </div>
         </div>
       </footer>

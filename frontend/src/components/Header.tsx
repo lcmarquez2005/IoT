@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WSStatus } from '../hooks/useVehicleWebSocket';
 import { getApiBaseUrl, setApiBaseUrl, getWsBaseUrl, setWsBaseUrl } from '../services/api';
-import { WifiOff, Settings, RefreshCw, Cpu, Activity, X, Keyboard } from 'lucide-react';
+import { WifiOff, Settings, RefreshCw, Cpu, Activity, X, Keyboard, Maximize, Minimize } from 'lucide-react';
 
 interface HeaderProps {
   wsStatus: WSStatus;
@@ -11,6 +11,8 @@ interface HeaderProps {
   setVehiculoId: (id: number) => void;
   keyboardEnabled: boolean;
   setKeyboardEnabled: (enabled: boolean) => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -21,6 +23,8 @@ export const Header: React.FC<HeaderProps> = ({
   setVehiculoId,
   keyboardEnabled,
   setKeyboardEnabled,
+  isFullscreen = false,
+  onToggleFullscreen,
 }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [tempApi, setTempApi] = useState(getApiBaseUrl());
@@ -105,6 +109,22 @@ export const Header: React.FC<HeaderProps> = ({
               <Activity className="w-3 h-3" />
               {vehicleConnected ? 'ESP32 Activo' : 'ESP32 En Espera'}
             </span>
+
+            {/* Botón Pantalla Completa (Mobile First) */}
+            {onToggleFullscreen && (
+              <button
+                onClick={onToggleFullscreen}
+                title={isFullscreen ? 'Salir de Pantalla Completa' : 'Modo Pantalla Completa (Mobile First)'}
+                className={`p-2 rounded-lg border transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                  isFullscreen
+                    ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                    : 'bg-slate-800 text-amber-400 border-amber-500/30 hover:bg-slate-700 hover:text-amber-300'
+                }`}
+              >
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                <span className="hidden md:inline">{isFullscreen ? 'Salir' : 'Fullscreen'}</span>
+              </button>
+            )}
 
             {/* Teclado Toggle */}
             <button
