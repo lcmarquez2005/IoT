@@ -270,16 +270,9 @@ export function App() {
       </main>
 
       {/* Footer de Créditos */}
-      <footer className="border-t border-slate-900 bg-slate-950/90 px-4 py-2.5 text-center text-xs text-slate-500 font-mono">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <footer className="border-t border-slate-900 bg-slate-950/90 px-4 py-2 text-center text-xs text-slate-500 font-mono">
+        <div className="max-w-7xl mx-auto flex items-center justify-center">
           <span>Desarrollado por <strong>Luis Carlos Márquez Strociak</strong> · 2026</span>
-          <div className="flex gap-4 opacity-75">
-            <span>[WASD] Joystick</span>
-            <span>[Espacio] Paro</span>
-            <span>[1] Power</span>
-            <span>[2] Música</span>
-            <span>[3] Luz</span>
-          </div>
         </div>
       </footer>
     </div>
