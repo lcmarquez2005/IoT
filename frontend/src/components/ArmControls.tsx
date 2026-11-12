@@ -19,12 +19,6 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center w-full select-none">
-      <div className="w-full text-center mb-1">
-        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-cyan-400 font-mono">
-          Brazo y Pala (Pulgar Der.)
-        </span>
-      </div>
-
       {/* Cluster Ergonómico Gamepad (2x2 Grid) - Altura sincronizada con el Joystick */}
       <div className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full max-w-[240px] sm:max-w-[260px]">
         {/* SUBIR BRAZO (Código 5) */}
