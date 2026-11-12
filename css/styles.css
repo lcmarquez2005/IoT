@@ -18,7 +18,7 @@
   --accent-success: #10b981;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --joystick-size: clamp(170px, 38vmin, 230px);
+  --joystick-size: clamp(130px, 30vmin, 175px);
 }
 
 * {
@@ -292,14 +292,14 @@ body.is-fullscreen {
   border: 1px solid var(--border-chassis);
   color: var(--text-main);
   font-weight: 600;
-  font-size: 0.78rem;
-  border-radius: 0.65rem;
-  padding: 0.45rem 0.6rem;
-  min-height: 44px;
+  font-size: 0.75rem;
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  min-height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   transition: all 0.15s ease;
 }
 
@@ -322,13 +322,13 @@ body.is-fullscreen {
   color: #ffffff;
   border: 2px solid #fca5a5;
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  padding: 0.65rem 1rem;
-  border-radius: 0.75rem;
-  min-height: 48px;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.45);
+  letter-spacing: 0.6px;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.65rem;
+  min-height: 40px;
+  box-shadow: 0 3px 12px rgba(239, 68, 68, 0.4);
   transition: all 0.15s ease;
   width: 100%;
 }
@@ -351,25 +351,26 @@ body.is-fullscreen {
 .action-pad-cluster {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.65rem;
+  gap: 0.45rem;
   width: 100%;
-  max-width: 280px;
+  max-width: 220px;
 }
 
 .btn-action-pad {
-  min-height: 54px;
+  min-height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.15rem;
   font-weight: 700;
-  font-size: 0.78rem;
-  border-radius: 0.85rem;
+  font-size: 0.72rem;
+  border-radius: 0.65rem;
+  padding: 0.25rem 0.4rem;
   background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
   border: 1.5px solid var(--border-chassis);
   color: var(--text-main);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   transition: all 0.15s ease;
   touch-action: manipulation;
 }

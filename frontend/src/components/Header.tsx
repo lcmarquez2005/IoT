@@ -41,15 +41,15 @@ export const Header: React.FC<HeaderProps> = ({
     switch (wsStatus) {
       case 'connected':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
-            <span className="w-2 h-2 rounded-full bg-emerald-400" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             WSS En Línea
           </span>
         );
       case 'connecting':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30">
-            <RefreshCw className="w-3 h-3 animate-spin" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30">
+            <RefreshCw className="w-2.5 h-2.5 animate-spin" />
             Reconectando WSS...
           </span>
         );
@@ -60,9 +60,9 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onReconnectWs}
             title="Haz clic para reintentar conexión"
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-950/80 text-rose-400 border border-rose-500/30 hover:bg-rose-900 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/80 text-rose-400 border border-rose-500/30 hover:bg-rose-900 transition-colors cursor-pointer"
           >
-            <WifiOff className="w-3 h-3" />
+            <WifiOff className="w-2.5 h-2.5" />
             WSS Desconectado
           </button>
         );
@@ -71,57 +71,54 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="border-b border-slate-800 bg-slate-900/70 backdrop-blur-md sticky top-0 z-30 px-4 py-3 sm:px-6">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-3 py-1.5 sm:px-6">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
           {/* Logo & Título */}
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 text-black shadow-lg shadow-amber-500/20">
-              <Cpu className="w-6 h-6 stroke-[2.2]" />
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-black shadow-md shadow-amber-500/20">
+              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+              <div className="flex items-center gap-1.5">
+                <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white">
                   Excavadora IoT
                 </h1>
-                <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-800 text-amber-400 border border-slate-700">
-                  v3.1 WSS
+                <span className="text-[9px] font-mono uppercase tracking-wider px-1 py-0.2 rounded bg-slate-800 text-amber-400 border border-slate-700">
+                  RC
                 </span>
               </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                Teleoperación y telemetría en tiempo real
-              </p>
             </div>
           </div>
 
           {/* Estado & Acciones */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {/* Status WSS */}
             {getStatusBadge()}
 
             {/* Status Vehículo Microcontrolador */}
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
                 vehicleConnected
-                  ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.15)]'
+                  ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
             >
-              <Activity className="w-3 h-3" />
-              {vehicleConnected ? 'ESP32 Activo' : 'ESP32 En Espera'}
+              <Activity className="w-2.5 h-2.5" />
+              {vehicleConnected ? 'ESP32 Activo' : 'ESP32 Espera'}
             </span>
 
             {/* Botón Pantalla Completa (Mobile First) */}
             {onToggleFullscreen && (
               <button
                 onClick={onToggleFullscreen}
-                title={isFullscreen ? 'Salir de Pantalla Completa' : 'Modo Pantalla Completa (Mobile First)'}
-                className={`p-2 rounded-lg border transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                title={isFullscreen ? 'Salir de Pantalla Completa' : 'Modo Pantalla Completa'}
+                className={`p-1.5 rounded-lg border transition-all flex items-center gap-1 text-[11px] font-semibold cursor-pointer ${
                   isFullscreen
-                    ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                    ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)]'
                     : 'bg-slate-800 text-amber-400 border-amber-500/30 hover:bg-slate-700 hover:text-amber-300'
                 }`}
               >
-                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
                 <span className="hidden md:inline">{isFullscreen ? 'Salir' : 'Fullscreen'}</span>
               </button>
             )}
@@ -129,23 +126,23 @@ export const Header: React.FC<HeaderProps> = ({
             {/* Teclado Toggle */}
             <button
               onClick={() => setKeyboardEnabled(!keyboardEnabled)}
-              title={keyboardEnabled ? 'Controles de teclado ACTIVADOS (WASD, Espacio)' : 'Controles de teclado DESACTIVADOS'}
-              className={`p-2 rounded-lg border transition-all ${
+              title={keyboardEnabled ? 'Controles de teclado ACTIVADOS' : 'Controles de teclado DESACTIVADOS'}
+              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                 keyboardEnabled
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]'
+                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
                   : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
               }`}
             >
-              <Keyboard className="w-4 h-4" />
+              <Keyboard className="w-3.5 h-3.5" />
             </button>
 
             {/* Configuración Server */}
             <button
               onClick={() => setShowConfig(true)}
               title="Configuración de endpoints AWS / Local"
-              className="p-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+              className="p-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

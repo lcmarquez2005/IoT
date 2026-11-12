@@ -215,18 +215,18 @@ export function App() {
       )}
 
       {/* Contenido Principal: Chasis de Control Remoto Gamepad (Mobile First) */}
-      <main className="flex-1 w-full max-w-7xl mx-auto p-2 sm:p-4 flex flex-col justify-center">
-        <div className="bg-slate-900/80 border-2 border-slate-800/90 rounded-3xl p-3 sm:p-5 shadow-2xl backdrop-blur-md">
+      <main className="flex-1 w-full max-w-6xl mx-auto p-1.5 sm:p-3 flex flex-col justify-center">
+        <div className="bg-slate-900/85 border border-slate-800 rounded-2xl p-2 sm:p-3.5 shadow-xl backdrop-blur-md">
           {/* Tip móvil de orientación (solo visible en pantallas verticales estrechas) */}
-          <div className="sm:hidden text-center mb-1 text-[10px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
-            <Smartphone className="w-3 h-3" />
-            <span>Gira tu celular o pulsa Pantalla Completa para modo control remoto</span>
+          <div className="sm:hidden text-center mb-1 text-[9px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
+            <Smartphone className="w-2.5 h-2.5" />
+            <span>Gira tu celular o pulsa Fullscreen para modo control</span>
           </div>
 
           {/* Grilla Gamepad: IZQUIERDA (Joystick) | CENTRO (Consola/Comodines/Paro) | DERECHA (Brazo/Pala) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center justify-items-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center">
             {/* 1. FLANCO IZQUIERDO: Joystick de Tracción (Orugas 1-4) */}
-            <div className="w-full flex flex-col items-center justify-center py-1">
+            <div className="w-full flex flex-col items-center justify-center">
               <VirtualJoystick
                 onCommand={handleSendCommand}
                 demoCommand={demoCommand}
@@ -235,7 +235,7 @@ export function App() {
             </div>
 
             {/* 2. CONSOLA CENTRAL: Encendido, Comodines (Luces/Música), Parada de Emergencia y DEMO */}
-            <div className="w-full flex flex-col items-center justify-center py-1">
+            <div className="w-full flex flex-col items-center justify-center">
               <CenterConsole
                 vehiculoId={vehiculoId}
                 onCommand={handleSendCommand}
@@ -248,7 +248,7 @@ export function App() {
             </div>
 
             {/* 3. FLANCO DERECHO: Clúster de Brazo y Pala (Pulgar Derecho) */}
-            <div className="w-full flex flex-col items-center justify-center py-1">
+            <div className="w-full flex flex-col items-center justify-center">
               <ArmControls
                 onCommand={handleSendCommand}
                 demoCommand={demoCommand}

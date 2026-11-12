@@ -111,22 +111,19 @@
         <section class="col-12 col-md-4 remote-center" aria-label="Consola de Funciones y Comodines">
           <div class="d-flex flex-column gap-2">
 
-            <!-- Fila Superior: Botón ENCENDER + Comodines (Luces y Música) -->
-            <div class="d-flex align-items-center gap-2">
+            <!-- Fila Superior: Botón ENCENDER + Comodines (Luces y Música) - Iconos Compactos Sin Texto -->
+            <div class="d-flex align-items-center justify-content-center gap-1">
               <!-- Botón Encendido / Power (Código 10) -->
-              <button type="button" class="btn power-btn-center flex-grow-1 d-flex align-items-center justify-content-center gap-1" data-command-code="10" title="Encender Vehículo">
-                <i class="bi bi-power fs-5"></i>
-                <span>ENCENDER</span>
+              <button type="button" class="btn power-btn-center flex-grow-1 d-flex align-items-center justify-content-center py-1" data-command-code="10" title="Encender Vehículo" aria-label="Encender Vehículo">
+                <i class="bi bi-power fs-6"></i>
               </button>
 
               <!-- Comodines: Música (11) y Luces (12) -->
-              <button type="button" class="btn aux-btn-center flex-grow-1" data-command-code="11" title="Alternar Música">
-                <i class="bi bi-music-note-beamed text-cyan"></i>
-                <span>Música</span>
+              <button type="button" class="btn aux-btn-center flex-grow-1 py-1" data-command-code="11" title="Alternar Música" aria-label="Alternar Música">
+                <i class="bi bi-music-note-beamed text-cyan fs-6"></i>
               </button>
-              <button type="button" class="btn aux-btn-center flex-grow-1" data-command-code="12" title="Alternar Luces">
-                <i class="bi bi-lightbulb-fill text-warning"></i>
-                <span>Luces</span>
+              <button type="button" class="btn aux-btn-center flex-grow-1 py-1" data-command-code="12" title="Alternar Luces" aria-label="Alternar Luces">
+                <i class="bi bi-lightbulb-fill text-warning fs-6"></i>
               </button>
             </div>
 

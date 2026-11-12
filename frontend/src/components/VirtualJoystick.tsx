@@ -69,7 +69,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     let dx = clientX - centerX;
     let dy = clientY - centerY;
 
-    const maxR = (rect.width / 2) - 34; // Límite dentro del anillo
+    const maxR = (rect.width / 2) - 26; // Límite dentro del anillo
     const distance = Math.hypot(dx, dy);
 
     if (distance > maxR) {
@@ -127,19 +127,19 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`relative w-44 h-44 sm:w-52 sm:h-52 rounded-full border-4 border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-2xl flex items-center justify-center cursor-grab active:cursor-grabbing ${
+        className={`relative w-36 h-36 sm:w-44 sm:h-44 rounded-full border-4 border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing ${
           disabled ? 'opacity-40 pointer-events-none' : ''
         }`}
         style={{
-          boxShadow: 'inset 0 4px 16px rgba(0,0,0,0.8), 0 0 25px rgba(0,0,0,0.6)',
+          boxShadow: 'inset 0 4px 16px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)',
         }}
       >
         {/* Zona neutral / Círculo central */}
-        <div className="absolute w-14 h-14 rounded-full border border-dashed border-slate-600/60 pointer-events-none" />
+        <div className="absolute w-11 h-11 rounded-full border border-dashed border-slate-600/60 pointer-events-none" />
 
         {/* Indicadores Cardinales */}
         <span
-          className={`absolute top-2.5 font-bold text-[10px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute top-1.5 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
             activeDir === 'up'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -148,7 +148,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ▲ AVANCE
         </span>
         <span
-          className={`absolute bottom-2.5 font-bold text-[10px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute bottom-1.5 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
             activeDir === 'down'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -157,7 +157,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ▼ REVERSA
         </span>
         <span
-          className={`absolute left-2.5 font-bold text-[10px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute left-1.5 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
             activeDir === 'left'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -166,7 +166,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ◀ IZQ
         </span>
         <span
-          className={`absolute right-2.5 font-bold text-[10px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute right-1.5 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
             activeDir === 'right'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -177,18 +177,18 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
 
         {/* Pomo móvil del joystick */}
         <div
-          className="absolute w-16 h-16 sm:w-18 sm:h-18 rounded-full border-2 border-amber-300 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800 shadow-xl pointer-events-none transition-transform duration-75 flex items-center justify-center will-change-transform"
+          className="absolute w-13 h-13 sm:w-15 sm:h-15 rounded-full border-2 border-amber-300 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800 shadow-lg pointer-events-none transition-transform duration-75 flex items-center justify-center will-change-transform"
           style={{
             transform: `translate(${handlePos.x}px, ${handlePos.y}px)`,
-            boxShadow: '0 6px 14px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4)',
           }}
         >
-          <div className="w-5 h-5 rounded-full bg-amber-950/70 border border-amber-900/50" />
+          <div className="w-4 h-4 rounded-full bg-amber-950/70 border border-amber-900/50" />
         </div>
       </div>
 
-      <span className="text-[10px] text-slate-400 mt-2 font-mono">
-        Pulgar Izquierdo • Centro para Parar
+      <span className="text-[9px] text-slate-500 mt-1 font-mono">
+        Pulgar Izquierdo • Centro Parar
       </span>
     </div>
   );
