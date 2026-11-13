@@ -58,11 +58,11 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
 
   return (
     <div className="flex flex-col items-center justify-center w-full select-none touch-none">
-      {/* Cruceta Ergonómica Gamepad (D-Pad Cross 3x3) - Mismas dimensiones que el Joystick */}
-      <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+      {/* Cruceta Ergonómica Gamepad (D-Pad Cross 3x3) - Mismas dimensiones y escalado que el Joystick */}
+      <div className="relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 xl:w-80 xl:h-80 flex items-center justify-center">
         {/* Chasis exterior de la cruceta con relieve */}
         <div
-          className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 w-full h-full p-1 sm:p-1.5 rounded-3xl border-4 border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl"
+          className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 lg:gap-2.5 xl:gap-3 w-full h-full p-1 sm:p-1.5 lg:p-2.5 xl:p-3 rounded-3xl lg:rounded-[2rem] border-4 lg:border-[6px] border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl"
           style={{
             boxShadow: 'inset 0 4px 16px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)',
           }}
@@ -82,8 +82,8 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
                   : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-amber-400/50 active:bg-amber-500 active:text-black'
               } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
             >
-              <ArrowUpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.2]" />
-              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">SUBIR</span>
+              <ArrowUpCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-11 xl:h-11 text-amber-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] lg:text-xs xl:text-sm font-bold leading-none mt-0.5 lg:mt-1 tracking-tight">SUBIR</span>
             </button>
           </div>
 
@@ -102,15 +102,15 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
                   : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-cyan-400/50 active:bg-cyan-500 active:text-black'
               } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
             >
-              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400 stroke-[2.2]" />
-              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">IZQ</span>
+              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-11 xl:h-11 text-cyan-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] lg:text-xs xl:text-sm font-bold leading-none mt-0.5 lg:mt-1 tracking-tight">IZQ</span>
             </button>
           </div>
 
           {/* Fila 2: Centro -> Pivote central neutral */}
           <div className="col-start-2 row-start-2 flex items-center justify-center pointer-events-none">
             <div className="w-full h-full rounded-lg bg-slate-950/90 border border-slate-800 flex items-center justify-center shadow-inner">
-              <div className="w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-700/80 shadow-sm" />
+              <div className="w-3.5 h-3.5 md:w-4.5 md:h-4.5 lg:w-6 lg:h-6 xl:w-8 xl:h-8 rounded-full bg-slate-800 border border-slate-700/80 shadow-sm" />
             </div>
           </div>
 
@@ -129,8 +129,8 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
                   : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-cyan-400/50 active:bg-cyan-500 active:text-black'
               } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
             >
-              <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400 stroke-[2.2]" />
-              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">DER</span>
+              <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-11 xl:h-11 text-cyan-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] lg:text-xs xl:text-sm font-bold leading-none mt-0.5 lg:mt-1 tracking-tight">DER</span>
             </button>
           </div>
 
@@ -149,14 +149,14 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
                   : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-amber-400/50 active:bg-amber-500 active:text-black'
               } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
             >
-              <ArrowDownCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.2]" />
-              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">BAJAR</span>
+              <ArrowDownCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-11 xl:h-11 text-amber-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] lg:text-xs xl:text-sm font-bold leading-none mt-0.5 lg:mt-1 tracking-tight">BAJAR</span>
             </button>
           </div>
         </div>
       </div>
 
-      <span className="text-[9px] text-slate-500 mt-1 font-mono">
+      <span className="text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-slate-500 mt-1 lg:mt-2.5 font-mono">
         Cruceta: Brazo (▲/▼) • Rotación (◀/▶)
       </span>
     </div>

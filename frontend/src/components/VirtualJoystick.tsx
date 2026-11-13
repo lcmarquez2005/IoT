@@ -46,7 +46,9 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     let dx = clientX - centerX;
     let dy = clientY - centerY;
 
-    const maxR = rect.width / 2 - 28; // Límite dentro del anillo
+    // Límite dentro del anillo escalable dinámicamente según el radio del pomo
+    const knobRadius = rect.width * 0.175;
+    const maxR = rect.width / 2 - knobRadius;
     const distance = Math.hypot(dx, dy);
 
     if (distance > maxR) {
@@ -194,7 +196,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`relative w-40 h-40 sm:w-48 sm:h-48 rounded-full border-4 border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none ${
+        className={`relative w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 xl:w-80 xl:h-80 rounded-full border-4 lg:border-[6px] border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl flex items-center justify-center cursor-grab active:cursor-grabbing touch-none select-none ${
           disabled ? 'opacity-40 pointer-events-none' : ''
         }`}
         style={{
@@ -202,11 +204,11 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         }}
       >
         {/* Zona neutral / Círculo central */}
-        <div className="absolute w-12 h-12 rounded-full border border-dashed border-slate-600/60 pointer-events-none" />
+        <div className="absolute w-12 h-12 md:w-14 md:h-14 lg:w-18 lg:h-18 xl:w-22 xl:h-22 rounded-full border border-dashed border-slate-600/60 pointer-events-none" />
 
         {/* Indicadores Cardinales */}
         <span
-          className={`absolute top-2 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute top-2 lg:top-3 xl:top-4 font-bold text-[9px] sm:text-[10px] lg:text-xs xl:text-sm tracking-wider transition-all pointer-events-none ${
             activeDir === 'up'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -215,7 +217,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ▲ AVANCE
         </span>
         <span
-          className={`absolute bottom-2 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute bottom-2 lg:bottom-3 xl:bottom-4 font-bold text-[9px] sm:text-[10px] lg:text-xs xl:text-sm tracking-wider transition-all pointer-events-none ${
             activeDir === 'down'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -224,7 +226,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ▼ REVERSA
         </span>
         <span
-          className={`absolute left-2 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute left-2 lg:left-3 xl:left-4 font-bold text-[9px] sm:text-[10px] lg:text-xs xl:text-sm tracking-wider transition-all pointer-events-none ${
             activeDir === 'left'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -233,7 +235,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
           ◀ IZQ
         </span>
         <span
-          className={`absolute right-2 font-bold text-[9px] tracking-wider transition-all pointer-events-none ${
+          className={`absolute right-2 lg:right-3 xl:right-4 font-bold text-[9px] sm:text-[10px] lg:text-xs xl:text-sm tracking-wider transition-all pointer-events-none ${
             activeDir === 'right'
               ? 'text-amber-400 scale-110 drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]'
               : 'text-slate-500'
@@ -245,7 +247,7 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
         {/* Pomo móvil del joystick */}
         {/* Sin transición CSS mientras se arrastra (evita rebotes y desfases con el dedo); transición suave al soltar */}
         <div
-          className={`absolute w-15 h-15 sm:w-16 sm:h-16 rounded-full border-2 border-amber-300 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800 shadow-lg pointer-events-none flex items-center justify-center will-change-transform ${
+          className={`absolute w-15 h-15 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-28 xl:h-28 rounded-full border-2 lg:border-[3px] border-amber-300 bg-gradient-to-br from-amber-400 via-amber-600 to-amber-800 shadow-lg pointer-events-none flex items-center justify-center will-change-transform ${
             isDragging ? 'transition-none' : 'transition-transform duration-150 ease-out'
           }`}
           style={{
@@ -253,11 +255,11 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
             boxShadow: '0 4px 12px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.4)',
           }}
         >
-          <div className="w-4.5 h-4.5 rounded-full bg-amber-950/70 border border-amber-900/50" />
+          <div className="w-4.5 h-4.5 md:w-5 md:h-5 lg:w-7 lg:h-7 xl:w-8 xl:h-8 rounded-full bg-amber-950/70 border border-amber-900/50" />
         </div>
       </div>
 
-      <span className="text-[9px] text-slate-500 mt-1 font-mono">
+      <span className="text-[9px] sm:text-[10px] lg:text-xs xl:text-sm text-slate-500 mt-1 lg:mt-2.5 font-mono">
         Pulgar Izquierdo • Centro Parar
       </span>
     </div>

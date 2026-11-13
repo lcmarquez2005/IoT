@@ -358,15 +358,15 @@ export function App() {
         </div>
       )}
 
-      {/* Contenido Principal Multivista (Mobile First) */}
+      {/* Contenido Principal Multivista (Mobile First & Auto-Scaling en Pantallas Grandes) */}
       <main
-        className={`w-full max-w-6xl mx-auto p-1.5 sm:p-3 flex flex-col ${
+        className={`w-full max-w-6xl lg:max-w-7xl xl:max-w-[1440px] 2xl:max-w-[1600px] mx-auto p-1.5 sm:p-3 lg:p-6 xl:p-8 flex flex-col ${
           activeTab === 'control' ? 'flex-1 justify-center' : 'py-3'
         }`}
       >
         {/* VISTA 1: CONTROL REMOTO (GAMEPAD RC) */}
         <div className={activeTab === 'control' ? 'block' : 'hidden'}>
-          <div className="bg-slate-900/85 border border-slate-800 rounded-2xl p-2 sm:p-3.5 shadow-xl backdrop-blur-md">
+          <div className="bg-slate-900/85 border border-slate-800 rounded-2xl lg:rounded-3xl p-2 sm:p-3.5 lg:p-6 xl:p-8 shadow-xl backdrop-blur-md">
             {/* Tip móvil de orientación (solo visible en pantallas verticales estrechas) */}
             <div className="sm:hidden text-center mb-1 text-[9px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
               <Smartphone className="w-2.5 h-2.5" />
@@ -374,7 +374,7 @@ export function App() {
             </div>
 
             {/* Grilla Gamepad: IZQUIERDA (Joystick) | CENTRO (Consola/Comodines/Paro) | DERECHA (Brazo/Pala) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8 xl:gap-14 items-center justify-items-center">
               {/* 1. FLANCO IZQUIERDO: Joystick de Tracción (Orugas 1-4) */}
               <div className="w-full flex flex-col items-center justify-center">
                 <VirtualJoystick
