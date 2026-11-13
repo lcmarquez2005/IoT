@@ -45,6 +45,8 @@ jobs:
 
       - name: Compilar frontend de Producción
         working-directory: frontend
+        env:
+          VITE_VERCEL_BRIDGE_URL: ${{ vars.VERCEL_BRIDGE_URL || 'https://iot-bridge-vercel.vercel.app' }}
         run: pnpm build
 
       - name: Configurar GitHub Pages

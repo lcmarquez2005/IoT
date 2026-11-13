@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getApiBaseUrl, setApiBaseUrl, getWsBaseUrl, setWsBaseUrl } from '../services/api';
+import { getApiBaseUrl, setApiBaseUrl, getWsBaseUrl, setWsBaseUrl, isGitHubPages, isVercel } from '../services/api';
 import {
   Settings,
   RefreshCw,
@@ -221,6 +221,26 @@ export const Header: React.FC<HeaderProps> = ({
             </p>
 
             <div className="space-y-4">
+              {/* Detección de entorno */}
+              <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+                <div className="flex items-center justify-between text-slate-400">
+                  <span>Entorno detectado:</span>
+                  {isGitHubPages() ? (
+                    <span className="font-semibold text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800/40">
+                      🌐 GitHub Pages (vía Puente Vercel)
+                    </span>
+                  ) : isVercel() ? (
+                    <span className="font-semibold text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800/40">
+                      ▲ Vercel (Proxy Serverless Activo)
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-amber-400 bg-amber-950/60 px-2 py-0.5 rounded border border-amber-800/40">
+                      💻 Desarrollo Local (Vite Proxy)
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1.5">
                   ID de Vehículo
@@ -246,11 +266,11 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Usa <code className="text-amber-400">/api</code> (recomendado: elimina bloqueos de CORS)
+                  En Vercel/Local usa <code className="text-amber-400">/api</code>. En GitHub Pages usa la URL de tu puente Vercel.
                 </span>
               </div>
 
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -259,12 +279,22 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-amber-400 hover:bg-slate-750 border border-slate-700 font-medium"
                 >
-                  ⚡ Preset: Proxy Seguro (/api)
+                  ⚡ Proxy Local / Vercel (/api)
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setTempApi('/api');
+                    const defaultBridge = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-bridge-vercel.vercel.app').replace(/\/$/, '');
+                    setTempApi(defaultBridge.endsWith('/api') ? defaultBridge : `${defaultBridge}/api`);
+                    setTempWs('wss://ec2-100-50-120-115.compute-1.amazonaws.com');
+                  }}
+                  className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-sky-400 hover:bg-slate-750 border border-slate-700 font-medium"
+                >
+                  🌉 Puente Vercel (GitHub Pages)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
                     setTempWs('wss://ec2-100-50-120-115.compute-1.amazonaws.com');
                   }}
                   className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-750 border border-slate-700"

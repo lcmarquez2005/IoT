@@ -35,6 +35,16 @@ export function isLocalEnvironment(): boolean {
   );
 }
 
+export function isGitHubPages(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname.endsWith('github.io');
+}
+
+export function isVercel(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.hostname.endsWith('vercel.app');
+}
+
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_API_BASE_URL');
@@ -42,15 +52,35 @@ export function getApiBaseUrl(): string {
     if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com') && saved !== '/api') {
       return saved.replace(/\/$/, '');
     }
+
+    // 1. Detección automática para GitHub Pages: conectar a través del puente Vercel
+    if (isGitHubPages()) {
+      const bridgeUrl = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-bridge-vercel.vercel.app').replace(/\/$/, '');
+      return bridgeUrl.endsWith('/api') ? bridgeUrl : `${bridgeUrl}/api`;
+    }
+
+    // 2. Si está en Vercel, conectarse a su propio proxy local (/api) que despacha a AWS EC2
+    if (isVercel()) {
+      return '/api';
+    }
+
+    // 3. En entorno de desarrollo local (localhost / LAN), usar el proxy de Vite (/api)
+    if (isLocalEnvironment()) {
+      return '/api';
+    }
   }
 
-  // SIEMPRE usar /api por defecto (en local con Vite proxy y en Vercel con proxy Serverless/Rewrites)
+  // Fallback estándar
   return '/api';
 }
 
 export function setApiBaseUrl(url: string): void {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('IOT_API_BASE_URL', url.replace(/\/$/, ''));
+    if (url === '/api' || url.trim() === '') {
+      localStorage.removeItem('IOT_API_BASE_URL');
+    } else {
+      localStorage.setItem('IOT_API_BASE_URL', url.replace(/\/$/, ''));
+    }
   }
 }
 
