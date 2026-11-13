@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowUpCircle, ArrowDownCircle, Maximize2, Minimize2 } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, RotateCw, RotateCcw } from 'lucide-react';
 
 interface ArmControlsProps {
   onCommand: (codigo: number, nombre: string) => void;
@@ -18,8 +18,8 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
 }) => {
   const isSubirDemo = demoCommand === 'SUBIR_BRAZO';
   const isBajarDemo = demoCommand === 'BAJAR_BRAZO';
-  const isAbrirDemo = demoCommand === 'ABRIR_PALA';
-  const isCerrarDemo = demoCommand === 'CERRAR_PALA';
+  const isAbrirDemo = demoCommand === 'ABRIR_PALA' || demoCommand === 'ROTAR_DERECHA';
+  const isCerrarDemo = demoCommand === 'CERRAR_PALA' || demoCommand === 'ROTAR_IZQUIERDA';
 
   const activeButtonRef = useRef<number | null>(null);
   const [activeButton, setActiveButton] = useState<number | null>(null);
@@ -96,40 +96,40 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
           <span className="text-[11px] sm:text-xs font-bold leading-none">Bajar Brazo</span>
         </button>
 
-        {/* ABRIR PALA (Código 7) */}
+        {/* ROTAR DERECHA (Código 7, catalogado en DB como ABRIR_PALA) */}
         <button
-          onPointerDown={(e) => handlePressStart(7, 'ABRIR_PALA', e)}
+          onPointerDown={(e) => handlePressStart(7, 'ROTAR_DERECHA', e)}
           onPointerUp={handlePressEnd}
           onPointerCancel={handlePressEnd}
           onClick={(e) => e.preventDefault()}
           disabled={disabled}
-          title="Abrir Pala / Cuchara (H)"
+          title="Rotar Torreta Derecha (H)"
           className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
             isAbrirDemo || activeButton === 7
               ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
               : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
           } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <Maximize2 className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Abrir Pala</span>
+          <RotateCw className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-bold leading-none">Rotar Derecha</span>
         </button>
 
-        {/* CERRAR PALA (Código 8) */}
+        {/* ROTAR IZQUIERDA (Código 8, catalogado en DB como CERRAR_PALA) */}
         <button
-          onPointerDown={(e) => handlePressStart(8, 'CERRAR_PALA', e)}
+          onPointerDown={(e) => handlePressStart(8, 'ROTAR_IZQUIERDA', e)}
           onPointerUp={handlePressEnd}
           onPointerCancel={handlePressEnd}
           onClick={(e) => e.preventDefault()}
           disabled={disabled}
-          title="Cerrar Pala / Cuchara (L)"
+          title="Rotar Torreta Izquierda (L)"
           className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
             isCerrarDemo || activeButton === 8
               ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
               : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
           } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
         >
-          <Minimize2 className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Cerrar Pala</span>
+          <RotateCcw className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
+          <span className="text-[11px] sm:text-xs font-bold leading-none">Rotar Izquierda</span>
         </button>
       </div>
 

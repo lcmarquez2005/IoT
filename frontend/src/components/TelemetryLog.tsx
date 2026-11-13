@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { WSEventMessage, MovimientoHistorial } from '../types/vehicle';
+import { WSEventMessage, MovimientoHistorial, formatCommandName } from '../types/vehicle';
 import { obtenerHistorialVehiculo } from '../services/api';
 import { Terminal, History, Trash2, RefreshCw } from 'lucide-react';
 
@@ -106,7 +106,7 @@ export const TelemetryLog: React.FC<TelemetryLogProps> = ({
         <div className="mb-3 px-3 py-2 rounded-xl bg-slate-950/70 border border-slate-800 text-xs font-mono flex items-center justify-between">
           <span className="text-slate-400">Último evento WSS:</span>
           <span className="text-amber-400 font-bold">
-            {lastMessage.comando || lastMessage.evento}
+            {formatCommandName(lastMessage.comando, lastMessage.codigo) || lastMessage.evento}
             {lastMessage.codigo !== undefined && ` (Cod ${lastMessage.codigo})`}
           </span>
         </div>
@@ -142,7 +142,7 @@ export const TelemetryLog: React.FC<TelemetryLogProps> = ({
                   <div className="text-slate-300 text-[11px] flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {log.comando && (
                       <span>
-                        Comando: <strong className="text-white">{log.comando}</strong>
+                        Comando: <strong className="text-white">{formatCommandName(log.comando, log.codigo)}</strong>
                       </span>
                     )}
                     {log.codigo !== undefined && (
@@ -174,7 +174,7 @@ export const TelemetryLog: React.FC<TelemetryLogProps> = ({
                   className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-850 flex items-center justify-between"
                 >
                   <div>
-                    <div className="text-white font-bold text-xs">{h.comando}</div>
+                    <div className="text-white font-bold text-xs">{formatCommandName(h.comando, h.codigo)}</div>
                     <div className="text-[10px] text-slate-500">
                       Cód: {h.codigo} • {h.origen}
                     </div>

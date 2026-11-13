@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { EstadoVehiculo, MovimientoHistorial, WSEventMessage } from '../types/vehicle';
+import { EstadoVehiculo, MovimientoHistorial, WSEventMessage, formatCommandName } from '../types/vehicle';
 import { obtenerEstadoVehiculo, obtenerHistorialVehiculo } from '../services/api';
 import { WSStatus } from '../hooks/useVehicleWebSocket';
 import {
@@ -112,7 +112,7 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
           return {
             id: h.id_historial || `${timestamp}-${h.codigo}`,
             codigo: h.codigo ?? 0,
-            comando: h.comando || `Comando #${h.codigo}`,
+            comando: formatCommandName(h.comando, h.codigo),
             origen: h.origen || 'RDS',
             fecha,
             hora,
@@ -204,7 +204,7 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
       const newEntry: FormattedMovementItem = {
         id: `rt-${timestamp}-${lastWsMessage.codigo}`,
         codigo: lastWsMessage.codigo ?? 0,
-        comando: lastWsMessage.comando || `Comando #${lastWsMessage.codigo}`,
+        comando: formatCommandName(lastWsMessage.comando, lastWsMessage.codigo),
         origen: lastWsMessage.origen || 'WSS_REALTIME',
         fecha,
         hora,
@@ -338,7 +338,7 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
                     estado?.comando
                   )}`}
                 >
-                  {estado?.comando || 'SIN MOVIMIENTOS'}
+                  {formatCommandName(estado?.comando, estado?.codigo)}
                 </span>
                 {estado?.codigo !== null && estado?.codigo !== undefined && (
                   <span className="text-xs font-mono text-slate-500">

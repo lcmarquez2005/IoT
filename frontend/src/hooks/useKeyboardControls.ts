@@ -18,8 +18,8 @@ const MOVEMENT_KEY_MAP: Record<string, { code: number; name: string }> = {
   arrowright: { code: 4, name: 'GIRAR_DERECHA' },
   k: { code: 5, name: 'SUBIR_BRAZO' },
   j: { code: 6, name: 'BAJAR_BRAZO' },
-  h: { code: 7, name: 'ABRIR_PALA' },
-  l: { code: 8, name: 'CERRAR_PALA' },
+  h: { code: 7, name: 'ROTAR_DERECHA' },
+  l: { code: 8, name: 'ROTAR_IZQUIERDA' },
 };
 
 export function useKeyboardControls({

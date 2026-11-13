@@ -9,7 +9,7 @@ import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { enviarMovimiento, obtenerEstadoVehiculo, verificarSaludApi } from './services/api';
 import { Smartphone } from 'lucide-react';
-import { WSEventMessage } from './types/vehicle';
+import { WSEventMessage, formatCommandName } from './types/vehicle';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<'control' | 'monitoring'>('control');
@@ -123,7 +123,8 @@ export function App() {
       if (typeof lastMessage.conectado === 'boolean') {
         setVehicleConnected(lastMessage.conectado);
       }
-      setLastWsEvent(`${lastMessage.evento} ${lastMessage.comando || ''} [${lastMessage.codigo ?? ''}]`);
+      const displayCmd = formatCommandName(lastMessage.comando, lastMessage.codigo);
+      setLastWsEvent(`${lastMessage.evento} ${displayCmd} [${lastMessage.codigo ?? ''}]`);
     }
   }, [lastMessage]);
 
@@ -158,7 +159,8 @@ export function App() {
           } catch {}
           heartbeatAbortRef.current = null;
         }
-        setLastAction({ nombre, codigo });
+        const displayCmd = formatCommandName(nombre, codigo);
+        setLastAction({ nombre: displayCmd, codigo });
       }
 
       let signal: AbortSignal | undefined;

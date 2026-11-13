@@ -79,3 +79,19 @@ export interface WSEventMessage {
   fecha_actualizacion?: string;
   timestamp: string;
 }
+
+/**
+ * Mapeo visual amigable para comandos del vehículo.
+ * En la BD y firmware físico, los códigos 7 y 8 están catalogados como
+ * ABRIR_PALA y CERRAR_PALA, pero corresponden físicamente a la rotación
+ * de la cabina/torreta: ROTAR DERECHA (7) y ROTAR IZQUIERDA (8).
+ */
+export function formatCommandName(comando?: string | null, codigo?: number | null): string {
+  if (codigo === 7 || comando === 'ABRIR_PALA') {
+    return 'ROTAR DERECHA';
+  }
+  if (codigo === 8 || comando === 'CERRAR_PALA') {
+    return 'ROTAR IZQUIERDA';
+  }
+  return comando || (codigo !== null && codigo !== undefined ? `Comando #${codigo}` : 'SIN MOVIMIENTOS');
+}
