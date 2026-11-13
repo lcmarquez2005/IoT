@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Power, Music, Lightbulb, OctagonAlert, Play, Square, Film } from 'lucide-react';
+import { Power, Music, Lightbulb, Play, Square, Film } from 'lucide-react';
 import { DemoItem } from '../types/vehicle';
 import { obtenerDemosVehiculo, iniciarDemo, cancelarDemo, obtenerEstadoDemo } from '../services/api';
 
@@ -136,19 +136,7 @@ export const CenterConsole: React.FC<CenterConsoleProps> = ({
         </button>
       </div>
 
-      {/* 2. Botón DETENER (Parada de Emergencia Prioritaria - Código 9) - Compacto */}
-      <button
-        onClick={() => onCommand(9, 'DETENER')}
-        disabled={disabled}
-        title="Parada Inmediata (Espacio)"
-        aria-label="Parada Inmediata DETENER"
-        className="w-full py-2 px-3 rounded-xl border-2 border-rose-400 bg-gradient-to-r from-rose-600 via-rose-700 to-rose-900 hover:from-rose-500 hover:to-rose-800 text-white font-black text-xs tracking-wider uppercase shadow-lg shadow-rose-950/60 active:scale-97 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-      >
-        <OctagonAlert className="w-4 h-4 text-rose-200 animate-pulse shrink-0" />
-        <span>DETENER (PARO TOTAL)</span>
-      </button>
-
-      {/* 3. Módulo DEMO Compacto */}
+      {/* 2. Módulo DEMO Compacto */}
       <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2 shadow-sm flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1 font-mono">

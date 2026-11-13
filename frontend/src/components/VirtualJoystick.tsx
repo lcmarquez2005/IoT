@@ -51,11 +51,9 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     setHandlePos({ x: 0, y: 0 });
     setActiveDir(null);
 
-    // Si había un movimiento activo, enviar DETENER
-    if (currentCmdRef.current !== null) {
-      currentCmdRef.current = null;
-      onCommand(9, 'DETENER');
-    }
+    // Enviar DETENER solo cuando se suelta el joystick
+    currentCmdRef.current = null;
+    onCommand(9, 'DETENER');
   }, [onCommand]);
 
   const processPosition = (clientX: number, clientY: number) => {
@@ -108,13 +106,11 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
 
     setActiveDir(newDir);
 
-    // Solo enviar si cambia el comando efectivo (evita ráfagas por píxel)
+    // Solo enviar si cambia el comando efectivo a una dirección válida
     if (newCmd !== currentCmdRef.current) {
       currentCmdRef.current = newCmd;
       if (newCmd !== null) {
         onCommand(newCmd, cmdName);
-      } else {
-        onCommand(9, 'DETENER');
       }
     }
   };

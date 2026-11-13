@@ -89,8 +89,14 @@ export function useKeyboardControls({ onCommand, enabled = true }: KeyboardContr
       }
     };
 
-    const handleKeyUp = () => {
+    const handleKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
       setActiveKey(null);
+
+      // Si se soltó una tecla de movimiento o brazo, enviar DETENER
+      if (['w', 'arrowup', 's', 'arrowdown', 'a', 'arrowleft', 'd', 'arrowright', 'k', 'j', 'h', 'l'].includes(key)) {
+        onCommand(9, 'DETENER');
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

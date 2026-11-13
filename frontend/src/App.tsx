@@ -6,8 +6,8 @@ import { CenterConsole } from './components/CenterConsole';
 import { TelemetryLog } from './components/TelemetryLog';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
-import { enviarMovimiento, obtenerEstadoVehiculo, isLocalEnvironment } from './services/api';
-import { ShieldAlert, ExternalLink, X, Smartphone } from 'lucide-react';
+import { enviarMovimiento, obtenerEstadoVehiculo } from './services/api';
+import { Smartphone } from 'lucide-react';
 import { WSEventMessage } from './types/vehicle';
 
 export function App() {
@@ -19,7 +19,6 @@ export function App() {
   const [keyboardEnabled, setKeyboardEnabled] = useState(true);
   const [vehicleConnected, setVehicleConnected] = useState(false);
   const [notification, setNotification] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-  const [dismissSslBanner, setDismissSslBanner] = useState(false);
   const [localLogs, setLocalLogs] = useState<WSEventMessage[]>([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -150,8 +149,6 @@ export function App() {
       }
     : null;
 
-  const showSslNotice = !isLocalEnvironment() && wsStatus !== 'connected' && !dismissSslBanner;
-
   return (
     <div className={`min-h-screen flex flex-col bg-slate-950 text-slate-100 ${isFullscreen ? 'h-screen overflow-hidden' : ''}`}>
       {/* Header con Estado, Indicadores y Botón Fullscreen */}
@@ -166,38 +163,6 @@ export function App() {
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
       />
-
-      {/* Banner de Aviso de Certificado SSL de AWS para producción */}
-      {showSslNotice && (
-        <div className="bg-amber-950/70 border-b border-amber-500/30 px-3 py-2 text-xs text-amber-200">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>
-                <strong>¿WSS desconectado en Vercel?</strong> AWS EC2 usa certificado auto-firmado:
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <a
-                href="https://ec2-100-50-120-115.compute-1.amazonaws.com/docs"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded text-xs transition-colors shadow"
-              >
-                Autorizar Certificado AWS
-                <ExternalLink className="w-3 h-3" />
-              </a>
-              <button
-                onClick={() => setDismissSslBanner(true)}
-                className="p-1 text-amber-400/70 hover:text-white"
-                title="Cerrar aviso"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Notificación flotante de error */}
       {notification && (
