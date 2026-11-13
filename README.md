@@ -1,53 +1,53 @@
-# Control de Excavadora IoT — Práctica 4.1
+# Control y Monitoreo de Excavadora IoT — Práctica 4.1 y 4.2
 
-Aplicación web responsiva (Mobile First) para la teleoperación y control en tiempo real de una excavadora o vehículo IoT, integrada con FastAPI en AWS EC2, WebSocket Seguro (WSS) y Amazon RDS MySQL.
+Aplicación web responsiva (Mobile First) para la teleoperación, control y **monitoreo en tiempo real** de una excavadora o vehículo IoT, integrada con FastAPI en AWS EC2, WebSocket Seguro (WSS) y persistencia en Amazon RDS MySQL.
 
 **Asignatura:** Implementación de Soluciones IoT  
 **Docente:** M.C. Víctor Manuel Pinedo Fernández  
 **Desarrollado por:** Luis Carlos Márquez Strociak · 2026  
 **Repositorio GitHub:** `https://github.com/lcmarquez2005/IoT`  
-**GitHub Pages:** `https://lcmarquez2005.github.io/IoT/`  
+**Publicación:** Rutas relativas portables para despliegue en GitHub Pages y Vercel  
 
 ---
 
-## 1. Mapa de Arquitectura y Flujo de Datos
+## 1. Mapa de Arquitectura y Flujo Multivista
 
 ```
 +-----------------------------------------------------------------------------------------+
-|                                CLIENTE WEB (GITHUB PAGES)                               |
+|                    APLICACIÓN WEB DUAL (SPA: CONTROL + MONITOREO)                       |
 |                                                                                         |
-|   +-----------------------+   +----------------------+   +--------------------------+   |
-|   |  Joystick Táctil /    |   | Botones Catálogo     |   | Automatización DEMO      |   |
-|   |  Mouse (PointerEvents)|   | (Brazo, Pala, Aux.)  |   | (Selección, Inicio, Paro)|   |
-|   +-----------+-----------+   +----------+-----------+   +------------+-------------+   |
-|               |                          |                            |                 |
-|               +--------------------------+----------------------------+                 |
-|                                          |                                              |
-|                               v          v          v                                   |
-|                        +------------------------------------+                           |
-|                        |     Movement & Demo Controller     |                           |
-|                        +-----------------+------------------+                           |
-+------------------------------------------|----------------------------------------------+
+|   [ 🎮 VISTA CONTROL ]                               [ 📊 VISTA MONITOREO ]             |
+|   • Joystick Táctil / Virtual                        • Tarjeta de Último Estado Real    |
+|   • Botones Brazo, Pala y Comodines                  • Tabla Top 10 Movimientos (RDS)   |
+|   • Paro de Emergencia (Prioritario)                 • Deduplicación y Recorte en Caliente|
+|   • Automatización y Cancelación DEMO                • Reconciliación REST post-caída   |
+|                                                                                         |
+|   [ HEADER COMPARTIDO — 3 INDICADORES INDEPENDIENTES ]                                  |
+|   1. WebSocket WSS (En línea / Conectando / Desconectado)                               |
+|   2. Servidor AWS 21 APIs (Disponible / Comprobando / No disponible)                    |
+|   3. Amazon RDS (Sin verificar — Rigor técnico: sin endpoint de diagnóstico directo)    |
++-----------------------------------------------------------------------------------------+
                                            |
-                    HTTP POST (Fetch API)  |   WSS Eventos (WebSocket Nativo)
-                    (Movimientos / DEMO)   |   (Tiempo Real)
+             HTTP REST (Fetch con timeout) |   WSS Bidireccional (/ws/{id})
+             (GET estado, GET historial)   |   (MOVIMIENTO_INDIVIDUAL, DEMO_*)
                                            v   ^
 +-----------------------------------------------------------------------------------------+
 |                                   BACKEND EN AWS EC2                                    |
 |   Instancia: ec2-100-50-120-115.compute-1.amazonaws.com (Puerto 443 HTTPS/WSS)          |
 |                                                                                         |
-|   +---------------------------------------------------------------------------------+   |
-|   |                            FastAPI + Uvicorn + WSS                              |   |
-|   |   • Endpoints REST (21 Stored Procedures mapeados)                              |   |
-|   |   • WebSocket Manager con difusión masiva por vehículo (/ws/{id})               |   |
-|   |   • DemoExecutionService temporizado                                            |   |
-|   +---------------------------------------+-----------------------------------------+   |
-|                                           |                                             |
-|                                           v                                             |
-|                         +-----------------------------------+                           |
-|                         |      Amazon RDS (MySQL 8.0)       |                           |
-|                         |    Base de datos: vehiculo_iot    |                           |
-|                         +-----------------------------------+                           |
+|   • FastAPI + Uvicorn + WSS                                                             |
+|   • Endpoints REST (21 Stored Procedures mapeados)                                      |
+|   • WebSocket Manager con difusión por vehículo (/ws/{id})                              |
+|   • DemoExecutionService temporizado (sin persistencia en historial individual)         |
++-----------------------------------------------------------------------------------------+
+                                           |
+                                           v
++-----------------------------------------------------------------------------------------+
+|                                 AMAZON RDS (MYSQL 8.0)                                  |
+|   Base de datos: vehiculo_iot                                                           |
+|   • sp_obtener_estado (Estado actual de conexión y último comando)                      |
+|   • sp_obtener_historial (Máximo 10 movimientos individuales persistidos)               |
+|   • sp_actualizar_estado + sp_registrar_historial (Transacción atómica de movimientos)   |
 +-----------------------------------------------------------------------------------------+
                                            |
                                            | WSS Seguro (Eventos)
@@ -63,139 +63,106 @@ Aplicación web responsiva (Mobile First) para la teleoperación y control en ti
 
 ---
 
-## 2. Árbol de Carpetas y Estructura Modular
+## 2. Contratos de la API y Eventos WebSocket
 
-El proyecto cumple estrictamente con el estándar modular HTML5 semántico, CSS3, Bootstrap 5 y JavaScript ES6+ con módulos nativos (sin empaquetadores pesados ni dependencias de compilación):
+### A. Endpoints REST Consumidos
+* **Información del Vehículo:** `GET /vehiculos/{id_vehiculo}`
+* **Último Estado Reportado:** `GET /vehiculos/{id_vehiculo}/estado`
+  ```json
+  {
+    "id_vehiculo": 1,
+    "vehiculo": "Excavadora IoT",
+    "id_comando": 1,
+    "comando": "AVANZAR",
+    "codigo": 1,
+    "conectado": true,
+    "fecha_actualizacion": "2026-11-12T18:30:00Z"
+  }
+  ```
+* **Historial Persistido (Máximo 10):** `GET /vehiculos/{id_vehiculo}/historial`
+  ```json
+  [
+    {
+      "id_historial": 105,
+      "id_vehiculo": 1,
+      "comando": "AVANZAR",
+      "codigo": 1,
+      "fecha_hora": "2026-11-12T18:30:00Z",
+      "origen": "CONTROL_WEB"
+    }
+  ]
+  ```
+* **Envío de Movimiento:** `POST /vehiculos/{id_vehiculo}/movimiento`
+  * Body: `{"codigo": 1, "origen": "REACT_DASHBOARD"}`
+* **Salud del Servidor AWS:** `GET /status` (Verifica disponibilidad HTTP 200 de los 21 servicios).
 
+### B. Eventos WebSocket (`/ws/{id_vehiculo}`)
+* `ESTADO_INICIAL`: Snapshot enviado al conectarse el socket.
+* `MOVIMIENTO_INDIVIDUAL`: Notificación en tiempo real cuando se ejecuta un movimiento (local o desde clientes externos). Se inserta en la tabla de historial y recorta la fila 11.
+* `DEMO_INICIO`, `DEMO_MOVIMIENTO`, `DEMO_FIN`, `DEMO_CANCELADA`: Rutinas DEMO. Actualizan el panel de último estado en curso, pero **están estrictamente filtradas para no contaminar la tabla de 10 movimientos individuales** de RDS.
+
+---
+
+## 3. Reglas de Negocio Implementadas en Monitoreo (Práctica 4.2)
+
+1. **Aislamiento de DEMO:** Las rutinas DEMO ejecutan secuencias en segundo plano y actualizan el estado transitorio del vehículo, pero la lógica de negocio del backend **prohíbe invocar `sp_registrar_historial`** para pasos DEMO. Por tanto, el frontend ignora eventos DEMO en la tabla dinámica, manteniendo la coherencia exacta con Amazon RDS.
+2. **Tabla Dinámica Top 10 con Recorte en Caliente:** Al recibir un `MOVIMIENTO_INDIVIDUAL` en vivo:
+   * Se inserta en la posición `#1`.
+   * Si la tabla tiene más de 10 filas, se remueve visualmente la fila 11.
+   * Se re-enumeran del 1 al 10 en tiempo real sin recargar la página.
+3. **Prevención de Condiciones de Carrera:** Si una petición REST llega con retraso tras haberse recibido un evento WSS más reciente, se evalúan las marcas de tiempo (`timestamp`) para asegurar que el dato viejo no sobreescriba el dato fresco.
+4. **Resiliencia y Reconexión:** Cuando el WebSocket se reconecta tras una interrupción de red, se dispara de inmediato una consulta REST (`GET /estado` + `GET /historial`) para rellenar posibles eventos perdidos durante la desconexión.
+5. **Indicadores Independientes:**
+   * **WebSocket WSS:** `En línea` (sesión activa con AWS) / `Conectando...` / `Desconectado`.
+   * **Servidor AWS:** `Disponible` (salud HTTP de 21 APIs) / `Comprobando...` / `No disponible`.
+   * **Amazon RDS:** `Sin verificar` (el backend no provee un endpoint de diagnóstico de DB directo, por lo que reportarlo como disponible sin prueba sería técnicamente engañoso).
+
+---
+
+## 4. Ejecución del Proyecto en Local
+
+```bash
+# 1. Ingresar a la carpeta de la aplicación
+cd frontend
+
+# 2. Instalar dependencias con pnpm (regla estricta: nunca usar npm)
+pnpm install
+
+# 3. Iniciar entorno de desarrollo
+pnpm dev
+
+# 4. Compilar para producción con rutas relativas
+pnpm build
 ```
-.
-├── index.html                  # Estructura semántica, accesibilidad y maquetación Mobile First
-├── assets/
-│   └── favicon.svg             # Favicon vectorial original representativo del proyecto IoT
-├── css/
-│   └── styles.css              # Estilos personalizados (Joystick, indicadores, botones ergonómicos)
-├── js/
-│   ├── config.js               # Parámetros de conexión, catálogo de comandos y persistencia
-│   ├── api-client.js           # Cliente REST modular con Fetch API, timeouts y async/await
-│   ├── websocket-client.js     # Cliente WebSocket nativo con heartbeat y reconexión limpia
-│   ├── joystick.js             # Controlador del joystick circular con Pointer Events y deadzone
-│   ├── movement-controller.js  # Lógica centralizada de comandos y prioridad máxima de DETENER
-│   ├── demo-controller.js      # Consulta, selección, inicio y cancelación de rutinas DEMO
-│   ├── status-indicators.js    # Los tres indicadores independientes (WSS, API AWS, RDS)
-│   ├── ui-feedback.js          # Retroalimentación visual operativa y notificaciones
-│   └── main.js                 # Punto de entrada ES6+ que orquesta la aplicación
-├── docs/                       # Documentación técnica, conclusiones y evidencias
-└── README.md                   # Documento maestro del proyecto
-```
 
 ---
 
-## 3. Catálogo Real de Comandos (Vehículo ID: 1)
+## 5. Guía de Verificación y Casos de Prueba (Evidencias)
 
-Los comandos integrados en la interfaz corresponden de forma idéntica a los registrados en la base de datos `vehiculo_iot`:
+### Caso 1: Carga Inicial de Monitoreo
+1. Abrir la aplicación y hacer clic en la pestaña **[📊 Monitoreo]**.
+2. Verificar que se ejecuten las consultas REST iniciales a `/vehiculos/1/estado` y `/vehiculos/1/historial`.
+3. Comprobar que la tarjeta de último movimiento muestre la fecha/hora formateada y que la tabla liste exactamente hasta 10 filas numeradas del 1 al 10.
 
-| Código | Comando | Tipo de Control | Acción Física |
-| :---: | :--- | :--- | :--- |
-| **1** | `AVANZAR` | Joystick (Norte) | Tracción de orugas hacia adelante |
-| **2** | `RETROCEDER` | Joystick (Sur) | Tracción de orugas hacia atrás |
-| **3** | `GIRAR_IZQUIERDA` | Joystick (Oeste) | Giro del vehículo sobre su propio eje a la izquierda |
-| **4** | `GIRAR_DERECHA` | Joystick (Este) | Giro del vehículo sobre su propio eje a la derecha |
-| **5** | `SUBIR_BRAZO` | Botón ergonómico | Elevación del brazo articulado |
-| **6** | `BAJAR_BRAZO` | Botón ergonómico | Descenso del brazo articulado |
-| **7** | `ABRIR_PALA` | Botón ergonómico | Apertura de la cuchara excavadora |
-| **8** | `CERRAR_PALA` | Botón ergonómico | Cierre de la cuchara excavadora |
-| **9** | `DETENER` | Botón Paro / Centro Joystick | Detención inmediata de cualquier actuador |
-| **10** | `ENCENDER` | Botón auxiliar | Encendido de sistema / vehículo |
-| **11** | `TOGGLE_MUSIC` | Botón auxiliar | Alternar sonido / música integrada |
-| **12** | `TOGGLE_LIGHT` | Botón auxiliar | Alternar luces led de la cabina |
+### Caso 2: Emisión Local de Movimiento
+1. En la pestaña **[🎮 Control]**, mover el joystick o presionar un botón de brazo/pala (ej. `SUBIR_BRAZO`, código 5).
+2. Cambiar a la pestaña **[📊 Monitoreo]** (o tenerla visible en pantalla dividida):
+   * La tarjeta pasa a `SUBIR_BRAZO`.
+   * La fila #1 de la tabla refleja el movimiento con el badge *"En vivo"*.
+   * La numeración se mantiene estricta del 1 al 10.
 
----
+### Caso 3: Emisión Externa (Thunder Client / Postman)
+1. Abrir Thunder Client o Postman.
+2. Enviar un `POST` a `https://ec2-100-50-120-115.compute-1.amazonaws.com/vehiculos/1/movimiento` con cuerpo `{"codigo": 1, "origen": "THUNDER_CLIENT"}`.
+3. Observar la vista de monitoreo en el navegador: la tabla y la tarjeta se actualizan automáticamente vía WebSocket sin necesidad de refrescar la página.
 
-## 4. Los Tres Indicadores Independientes de Conectividad (Req. 6.1)
+### Caso 4: Filtro de DEMO
+1. Desde la vista de Control, seleccionar una rutina DEMO y pulsar **Iniciar DEMO**.
+2. Cambiar a la vista de Monitoreo:
+   * La tarjeta muestra el paso DEMO en ejecución.
+   * La tabla de los 10 movimientos individuales **permanece inalterada**, confirmando que los pasos DEMO no ensucian el historial de movimientos individuales.
 
-La interfaz presenta en la parte superior tres estados independientes con verificaciones reales y diferenciadas:
-
-1. **WebSocket WSS:**
-   - **En línea:** Sesión WebSocket activa entre el navegador y el servidor AWS. *(No equivale a que el vehículo físico esté encendido o conectado)*.
-   - **Conectando / Reconectando:** Intento de apertura de socket en curso.
-   - **Desconectado:** Conexión cerrada o rechazada.
-2. **Servidor AWS · API de 21 servicios:**
-   - **Disponible:** Comprobación periódica HTTP a la operación `/status` respondiendo con código 200. *(No confirma que las 21 APIs se hayan ejecutado exitosamente)*.
-   - **Comprobando:** Petición de diagnóstico en tránsito.
-   - **No disponible:** Servidor inalcanzable o respuesta fuera de tiempo.
-3. **Base de Datos · Amazon RDS:**
-   - **Sin verificar:** Dado que el backend actual no ofrece un endpoint aislado de diagnóstico de dependencias de MySQL, la aplicación cumple con la norma académica estricta de reportar el estado como *Sin verificar* para no realizar afirmaciones sin evidencia directa.
-
----
-
-## 5. Instrucciones de Ejecución Local
-
-Para probar la aplicación en Visual Studio Code sin requerir compilación ni Node.js:
-
-1. Clonar el repositorio:
-   ```bash
-   git clone https://github.com/lcmarquez2005/IoT.git
-   cd IoT
-   ```
-2. Abrir el proyecto en **Visual Studio Code**.
-3. Iniciar un servidor web local estático (debido al uso de módulos nativos ES6 `import/export`, los navegadores requieren servir mediante protocolo HTTP/HTTPS):
-   - Con la extensión **Live Server** de VS Code: Clic derecho en `index.html` → *Open with Live Server*.
-   - O con Python en la terminal:
-     ```bash
-     python3 -m http.server 8080
-     ```
-4. Abrir en el navegador: `http://localhost:8080`.
-
----
-
-## 6. Guía de Publicación en GitHub Pages
-
-1. Ir al repositorio en GitHub: `https://github.com/lcmarquez2005/IoT`.
-2. Ingresar a **Settings** → **Pages**.
-3. En **Build and deployment**:
-   - **Source:** *Deploy from a branch*.
-   - **Branch:** `main` / `root (/)`.
-4. Guardar cambios. GitHub Pages activará la URL pública HTTPS en:  
-   `https://lcmarquez2005.github.io/IoT/`
-5. Todas las rutas de estilos, scripts e imágenes son relativas (`./`), por lo que funcionan perfectamente bajo la subruta del repositorio.
-
----
-
-## 7. Casos de Prueba Paso a Paso (Evidencias)
-
-### Prueba A: Movimiento Individual
-1. En la pantalla táctil del móvil o con mouse, arrastrar el joystick hacia arriba (Norte).
-2. Observar en el panel de retroalimentación:
-   - *Última acción:* `AVANZAR (Código 1)`.
-   - *Respuesta HTTP:* `HTTP 200 — Movimiento individual ejecutado y registrado correctamente`.
-3. En un cliente WebSocket externo (Thunder Client / Postman):
-   - Verificar la recepción del JSON: `{"evento":"MOVIMIENTO_INDIVIDUAL","codigo":1,"comando":"AVANZAR",...}`.
-
-### Prueba B: Cambio de Dirección y DETENER
-1. Arrastrar el joystick a la izquierda (`GIRAR_IZQUIERDA`, código 3) y soltarlo inmediatamente.
-2. Al soltar, el joystick regresa automáticamente a la zona neutral central y emite `DETENER` (código 9).
-3. Verificar que solo se enviaron 2 peticiones POST (una al iniciar giro y otra al soltar), sin emitir ráfagas continuas por cada píxel.
-
-### Prueba C: Automatización DEMO
-1. Seleccionar la rutina en el menú desplegable: `Demo principal`.
-2. Pulsar **Iniciar DEMO**:
-   - Los controles manuales se bloquean para evitar comandos conflictivos concurrentes.
-   - La barra de progreso avanza en tiempo real conforme llegan los eventos `DEMO_MOVIMIENTO`.
-3. Pulsar **Cancelar**: Se emite la petición a `/demos/cancelar` y el sistema regresa a reposo seguro.
-
-### Prueba D: Verificación Independiente en Cliente Externo WSS
-1. Abrir Thunder Client en VS Code o Postman.
-2. Conectar a: `wss://ec2-100-50-120-115.compute-1.amazonaws.com/ws/1`.
-3. Enviar cualquier comando desde la interfaz web y contrastar que el cliente externo reciba exactamente el mismo payload JSON con timestamp idéntico.
-
----
-
-## 8. Checklist de Seguridad, Accesibilidad y Calidad
-
-- [x] **Sin secretos públicos:** No se incluyen claves de AWS, credenciales de RDS ni tokens en el código fuente.
-- [x] **Prioridad Operativa de DETENER:** El botón de paro total anula solicitudes en curso y detiene inmediatamente el vehículo.
-- [x] **Aislamiento de Responsabilidades:** Separación estricta entre presentación, cliente HTTP, gestión WebSocket y controladores de dominio.
-- [x] **Accesibilidad Táctil:** Botones con dimensiones mínimas de 44 × 44 px, contraste accesible (WCAG AA) y navegación opcional por teclado (WASD, Espacio).
-- [x] **Compatibilidad Mobile First:** Diseñado y probado para smartphone en orientación vertical y horizontal, adaptándose a tablet y escritorio.
-- [x] **Créditos Obligatorios:** Visible en el pie de página: *«Desarrollado por Luis Carlos Márquez Strociak · 2026»*.
-- [x] **Favicon Original:** Incorporado en formato SVG y vinculado en el `<head>`.
+### Caso 5: Reconexión WSS
+1. Desconectar temporalmente la red WiFi o bloquear temporalmente el puerto WebSocket.
+2. El indicador WSS pasará a `Desconectado` / `Conectando...`.
+3. Al restablecer la red, el cliente se reconecta automáticamente y resincroniza el historial REST con Amazon RDS.

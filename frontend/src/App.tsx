@@ -4,13 +4,17 @@ import { VirtualJoystick } from './components/VirtualJoystick';
 import { ArmControls } from './components/ArmControls';
 import { CenterConsole } from './components/CenterConsole';
 import { TelemetryLog } from './components/TelemetryLog';
+import { MonitoringView } from './components/MonitoringView';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
-import { enviarMovimiento, obtenerEstadoVehiculo } from './services/api';
+import { enviarMovimiento, obtenerEstadoVehiculo, verificarSaludApi } from './services/api';
 import { Smartphone } from 'lucide-react';
 import { WSEventMessage } from './types/vehicle';
 
 export function App() {
+  const [activeTab, setActiveTab] = useState<'control' | 'monitoring'>('control');
+  const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
+
   const [vehiculoId, setVehiculoId] = useState<number>(() => {
     const saved = localStorage.getItem('IOT_VEHICULO_ID');
     return saved ? Number(saved) : 1;
@@ -78,6 +82,19 @@ export function App() {
     return () => clearInterval(interval);
   }, [vehiculoId]);
 
+  // Comprobación periódica de salud de la API (Servidor AWS 21 APIs)
+  useEffect(() => {
+    let timer: number;
+    const checkHealth = () => {
+      verificarSaludApi()
+        .then((ok) => setApiHealthy(ok))
+        .catch(() => setApiHealthy(false));
+    };
+    checkHealth();
+    timer = window.setInterval(checkHealth, 8000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Actualizar bandera 'conectado' y último evento WS
   useEffect(() => {
     if (lastMessage) {
@@ -130,10 +147,10 @@ export function App() {
     setLocalLogs([]);
   }, [clearLogs]);
 
-  // Teclado físico
+  // Teclado físico (solo activo en la vista Control)
   useKeyboardControls({
     onCommand: handleSendCommand,
-    enabled: keyboardEnabled,
+    enabled: keyboardEnabled && activeTab === 'control',
   });
 
   // Comando activo ÚNICAMENTE durante una rutina DEMO
@@ -151,7 +168,7 @@ export function App() {
 
   return (
     <div className={`min-h-screen flex flex-col bg-slate-950 text-slate-100 ${isFullscreen ? 'h-screen overflow-hidden' : ''}`}>
-      {/* Header con Estado, Indicadores y Botón Fullscreen */}
+      {/* Header con Estado, Indicadores, Pestañas de Navegación y Botón Fullscreen */}
       <Header
         wsStatus={wsStatus}
         vehicleConnected={vehicleConnected}
@@ -162,6 +179,9 @@ export function App() {
         setKeyboardEnabled={setKeyboardEnabled}
         isFullscreen={isFullscreen}
         onToggleFullscreen={handleToggleFullscreen}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        apiHealthy={apiHealthy}
       />
 
       {/* Notificación flotante de error */}
@@ -179,57 +199,69 @@ export function App() {
         </div>
       )}
 
-      {/* Contenido Principal: Chasis de Control Remoto Gamepad (Mobile First) */}
+      {/* Contenido Principal Multivista (Mobile First) */}
       <main className="flex-1 w-full max-w-6xl mx-auto p-1.5 sm:p-3 flex flex-col justify-center">
-        <div className="bg-slate-900/85 border border-slate-800 rounded-2xl p-2 sm:p-3.5 shadow-xl backdrop-blur-md">
-          {/* Tip móvil de orientación (solo visible en pantallas verticales estrechas) */}
-          <div className="sm:hidden text-center mb-1 text-[9px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
-            <Smartphone className="w-2.5 h-2.5" />
-            <span>Gira tu celular o pulsa Fullscreen para modo control</span>
+        {/* VISTA 1: CONTROL REMOTO (GAMEPAD RC) */}
+        <div className={activeTab === 'control' ? 'block' : 'hidden'}>
+          <div className="bg-slate-900/85 border border-slate-800 rounded-2xl p-2 sm:p-3.5 shadow-xl backdrop-blur-md">
+            {/* Tip móvil de orientación (solo visible en pantallas verticales estrechas) */}
+            <div className="sm:hidden text-center mb-1 text-[9px] text-amber-400/80 font-mono flex items-center justify-center gap-1">
+              <Smartphone className="w-2.5 h-2.5" />
+              <span>Gira tu celular o pulsa Fullscreen para modo control</span>
+            </div>
+
+            {/* Grilla Gamepad: IZQUIERDA (Joystick) | CENTRO (Consola/Comodines/Paro) | DERECHA (Brazo/Pala) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center">
+              {/* 1. FLANCO IZQUIERDO: Joystick de Tracción (Orugas 1-4) */}
+              <div className="w-full flex flex-col items-center justify-center">
+                <VirtualJoystick
+                  onCommand={handleSendCommand}
+                  demoCommand={demoCommand}
+                  disabled={isDemoExecuting}
+                />
+              </div>
+
+              {/* 2. CONSOLA CENTRAL: Encendido, Comodines (Luces/Música), Parada de Emergencia y DEMO */}
+              <div className="w-full flex flex-col items-center justify-center">
+                <CenterConsole
+                  vehiculoId={vehiculoId}
+                  onCommand={handleSendCommand}
+                  demoProgress={demoProgress}
+                  lastAction={lastAction}
+                  lastHttpResult={lastHttpResult}
+                  lastWsEvent={lastWsEvent}
+                  disabled={isDemoExecuting}
+                />
+              </div>
+
+              {/* 3. FLANCO DERECHO: Clúster de Brazo y Pala (Pulgar Derecho) */}
+              <div className="w-full flex flex-col items-center justify-center">
+                <ArmControls
+                  onCommand={handleSendCommand}
+                  demoCommand={demoCommand}
+                  disabled={isDemoExecuting}
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Grilla Gamepad: IZQUIERDA (Joystick) | CENTRO (Consola/Comodines/Paro) | DERECHA (Brazo/Pala) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4 items-center justify-items-center">
-            {/* 1. FLANCO IZQUIERDO: Joystick de Tracción (Orugas 1-4) */}
-            <div className="w-full flex flex-col items-center justify-center">
-              <VirtualJoystick
-                onCommand={handleSendCommand}
-                demoCommand={demoCommand}
-                disabled={isDemoExecuting}
-              />
-            </div>
-
-            {/* 2. CONSOLA CENTRAL: Encendido, Comodines (Luces/Música), Parada de Emergencia y DEMO */}
-            <div className="w-full flex flex-col items-center justify-center">
-              <CenterConsole
-                vehiculoId={vehiculoId}
-                onCommand={handleSendCommand}
-                demoProgress={demoProgress}
-                lastAction={lastAction}
-                lastHttpResult={lastHttpResult}
-                lastWsEvent={lastWsEvent}
-                disabled={isDemoExecuting}
-              />
-            </div>
-
-            {/* 3. FLANCO DERECHO: Clúster de Brazo y Pala (Pulgar Derecho) */}
-            <div className="w-full flex flex-col items-center justify-center">
-              <ArmControls
-                onCommand={handleSendCommand}
-                demoCommand={demoCommand}
-                disabled={isDemoExecuting}
-              />
-            </div>
+          {/* Panel secundario de Telemetría expandible en pantallas medianas/grandes */}
+          <div className="mt-4 hidden lg:block">
+            <TelemetryLog
+              vehiculoId={vehiculoId}
+              eventLogs={combinedLogs}
+              onClearLogs={handleClearLogs}
+              lastMessage={lastMessage}
+            />
           </div>
         </div>
 
-        {/* Panel secundario de Telemetría expandible en pantallas medianas/grandes */}
-        <div className="mt-4 hidden lg:block">
-          <TelemetryLog
+        {/* VISTA 2: MONITOREO EN TIEMPO REAL (PRÁCTICA 4.2) */}
+        <div className={activeTab === 'monitoring' ? 'block' : 'hidden'}>
+          <MonitoringView
             vehiculoId={vehiculoId}
-            eventLogs={combinedLogs}
-            onClearLogs={handleClearLogs}
-            lastMessage={lastMessage}
+            lastWsMessage={lastMessage}
+            wsStatus={wsStatus}
           />
         </div>
       </main>

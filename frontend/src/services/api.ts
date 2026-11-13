@@ -1,4 +1,24 @@
-import { EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
+import { Vehiculo, EstadoVehiculo, MovimientoHistorial, Comando, DemoItem, DemoEstadoEjecucion } from '../types/vehicle';
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs: number = 7000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(id);
+    return response;
+  } catch (err: any) {
+    clearTimeout(id);
+    if (err.name === 'AbortError') {
+      throw new Error(`Tiempo de espera agotado (${timeoutMs / 1000}s)`);
+    }
+    throw err;
+  }
+}
 
 export function isLocalEnvironment(): boolean {
   if (typeof window === 'undefined') return true;
@@ -81,16 +101,33 @@ export async function detenerVehiculo(idVehiculo: number) {
   return enviarMovimiento(idVehiculo, 9, 'REACT_EMERGENCY_STOP');
 }
 
+export async function obtenerVehiculo(idVehiculo: number): Promise<Vehiculo> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetchWithTimeout(`${baseUrl}/vehiculos/${idVehiculo}`, {}, 6000);
+  if (!response.ok) throw new Error(`Fallo al consultar vehículo (${response.status})`);
+  return response.json();
+}
+
+export async function verificarSaludApi(): Promise<boolean> {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const response = await fetchWithTimeout(`${baseUrl}/status`, {}, 4000);
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export async function obtenerEstadoVehiculo(idVehiculo: number): Promise<EstadoVehiculo> {
   const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/vehiculos/${idVehiculo}/estado`);
+  const response = await fetchWithTimeout(`${baseUrl}/vehiculos/${idVehiculo}/estado`, {}, 6000);
   if (!response.ok) throw new Error('No se pudo obtener el estado del vehículo');
   return response.json();
 }
 
 export async function obtenerHistorialVehiculo(idVehiculo: number): Promise<MovimientoHistorial[]> {
   const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/vehiculos/${idVehiculo}/historial`);
+  const response = await fetchWithTimeout(`${baseUrl}/vehiculos/${idVehiculo}/historial`, {}, 6000);
   if (!response.ok) throw new Error('No se pudo obtener el historial');
   return response.json();
 }

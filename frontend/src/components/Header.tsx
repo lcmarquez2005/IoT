@@ -1,7 +1,20 @@
 import React, { useState } from 'react';
 import { WSStatus } from '../hooks/useVehicleWebSocket';
 import { getApiBaseUrl, setApiBaseUrl, getWsBaseUrl, setWsBaseUrl } from '../services/api';
-import { WifiOff, Settings, RefreshCw, Cpu, Activity, X, Keyboard, Maximize, Minimize } from 'lucide-react';
+import {
+  WifiOff,
+  Settings,
+  RefreshCw,
+  Cpu,
+  Activity,
+  X,
+  Keyboard,
+  Maximize,
+  Minimize,
+  Gamepad2,
+  Server,
+  Database,
+} from 'lucide-react';
 
 interface HeaderProps {
   wsStatus: WSStatus;
@@ -13,6 +26,9 @@ interface HeaderProps {
   setKeyboardEnabled: (enabled: boolean) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  activeTab: 'control' | 'monitoring';
+  setActiveTab: (tab: 'control' | 'monitoring') => void;
+  apiHealthy?: boolean | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +41,9 @@ export const Header: React.FC<HeaderProps> = ({
   setKeyboardEnabled,
   isFullscreen = false,
   onToggleFullscreen,
+  activeTab,
+  setActiveTab,
+  apiHealthy = true,
 }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [tempApi, setTempApi] = useState(getApiBaseUrl());
@@ -41,16 +60,22 @@ export const Header: React.FC<HeaderProps> = ({
     switch (wsStatus) {
       case 'connected':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            WSS En Línea
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
+            title="WebSocket WSS: Sesión de navegador en línea con AWS EC2"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            WSS: <strong>En línea</strong>
           </span>
         );
       case 'connecting':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30">
+          <span
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30"
+            title="WebSocket WSS: Estableciendo conexión segura..."
+          >
             <RefreshCw className="w-2.5 h-2.5 animate-spin" />
-            Reconectando WSS...
+            WSS: <strong>Conectando...</strong>
           </span>
         );
       case 'error':
@@ -59,49 +84,130 @@ export const Header: React.FC<HeaderProps> = ({
         return (
           <button
             onClick={onReconnectWs}
-            title="Haz clic para reintentar conexión"
+            title="WebSocket WSS Desconectado. Haz clic para reintentar conexión"
             className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/80 text-rose-400 border border-rose-500/30 hover:bg-rose-900 transition-colors cursor-pointer"
           >
             <WifiOff className="w-2.5 h-2.5" />
-            WSS Desconectado
+            WSS: <strong>Desconectado</strong>
           </button>
         );
     }
+  };
+
+  const getApiStatusBadge = () => {
+    if (apiHealthy === null) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30"
+          title="Servidor AWS: Comprobando disponibilidad HTTP..."
+        >
+          <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+          AWS 21 APIs: <strong>Comprobando...</strong>
+        </span>
+      );
+    }
+
+    if (apiHealthy) {
+      return (
+        <span
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30"
+          title="Servidor AWS: 21 servicios y endpoints REST disponibles"
+        >
+          <Server className="w-2.5 h-2.5" />
+          AWS: <strong>Disponible</strong>
+        </span>
+      );
+    }
+
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/80 text-rose-400 border border-rose-500/30"
+        title="Servidor AWS: No responde a la comprobación de salud"
+      >
+        <Server className="w-2.5 h-2.5" />
+        AWS: <strong>No disponible</strong>
+      </span>
+    );
   };
 
   return (
     <>
       <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-3 py-1.5 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
-          {/* Logo & Título */}
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-black shadow-md shadow-amber-500/20">
-              <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white">
-                  Excavadora IoT
-                </h1>
-                <span className="text-[9px] font-mono uppercase tracking-wider px-1 py-0.2 rounded bg-slate-800 text-amber-400 border border-slate-700">
-                  RC
-                </span>
+          {/* Logo & Título & Selector de Vista */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 text-black shadow-md shadow-amber-500/20">
+                <Cpu className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-sm sm:text-lg font-bold tracking-tight text-white">
+                    Excavadora IoT
+                  </h1>
+                  <span className="text-[9px] font-mono uppercase tracking-wider px-1 py-0.2 rounded bg-slate-800 text-amber-400 border border-slate-700">
+                    RC
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* BARRA DE NAVEGACIÓN LIMPIA: CONTROL / MONITOREO */}
+            <nav className="flex items-center bg-slate-950 p-0.5 rounded-xl border border-slate-800" aria-label="Navegación principal">
+              <button
+                type="button"
+                onClick={() => setActiveTab('control')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'control'
+                    ? 'bg-amber-500 text-black shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+                aria-current={activeTab === 'control' ? 'page' : undefined}
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                <span>Control</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('monitoring')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'monitoring'
+                    ? 'bg-amber-500 text-black shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+                aria-current={activeTab === 'monitoring' ? 'page' : undefined}
+              >
+                <Activity className="w-3.5 h-3.5" />
+                <span>Monitoreo</span>
+              </button>
+            </nav>
           </div>
 
-          {/* Estado & Acciones */}
+          {/* LOS 3 INDICADORES INDEPENDIENTES DE CONECTIVIDAD + ACCIONES */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {/* Status WSS */}
+            {/* Indicador 1: WebSocket WSS (Sesión del navegador) */}
             {getStatusBadge()}
 
-            {/* Status Vehículo Microcontrolador */}
+            {/* Indicador 2: Servidor AWS · API 21 servicios */}
+            {getApiStatusBadge()}
+
+            {/* Indicador 3: Amazon RDS (Sin verificar obligatorio por rúbrica) */}
             <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800/80 text-slate-400 border border-slate-700"
+              title="Amazon RDS: Sin verificar. El backend no expone un endpoint seguro de diagnóstico directo de base de datos."
+            >
+              <Database className="w-2.5 h-2.5 text-slate-400" />
+              RDS: <strong>Sin verificar</strong>
+            </span>
+
+            {/* Status Vehículo Microcontrolador (solo si está activo) */}
+            <span
+              className={`hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                 vehicleConnected
-                  ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
+                  ? 'bg-cyan-950/80 text-cyan-400 border-cyan-500/30'
                   : 'bg-slate-800 text-slate-400 border-slate-700'
               }`}
+              title="Estado reportado en base de datos del hardware ESP32"
             >
               <Activity className="w-2.5 h-2.5" />
               {vehicleConnected ? 'ESP32 Activo' : 'ESP32 Espera'}
@@ -123,18 +229,20 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
-            {/* Teclado Toggle */}
-            <button
-              onClick={() => setKeyboardEnabled(!keyboardEnabled)}
-              title={keyboardEnabled ? 'Controles de teclado ACTIVADOS' : 'Controles de teclado DESACTIVADOS'}
-              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                keyboardEnabled
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
-                  : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <Keyboard className="w-3.5 h-3.5" />
-            </button>
+            {/* Teclado Toggle (solo relevante en Control) */}
+            {activeTab === 'control' && (
+              <button
+                onClick={() => setKeyboardEnabled(!keyboardEnabled)}
+                title={keyboardEnabled ? 'Controles de teclado ACTIVADOS' : 'Controles de teclado DESACTIVADOS'}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  keyboardEnabled
+                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-400'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Keyboard className="w-3.5 h-3.5" />
+              </button>
+            )}
 
             {/* Configuración Server */}
             <button

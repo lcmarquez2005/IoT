@@ -1,16 +1,17 @@
 export interface Vehiculo {
   id_vehiculo: number;
   nombre: string;
-  modelo: string;
-  descripcion: string;
-  microcontrolador: string;
-  activo: boolean;
+  modelo?: string | null;
+  descripcion?: string | null;
+  microcontrolador?: string | null;
+  activo: boolean | number;
 }
 
 export interface EstadoVehiculo {
   id_vehiculo: number;
-  nombre: string;
-  conectado: boolean;
+  vehiculo?: string;
+  nombre?: string;
+  conectado: boolean | number;
   id_comando: number | null;
   comando: string | null;
   codigo: number | null;
@@ -22,18 +23,19 @@ export interface Comando {
   id_vehiculo: number;
   nombre: string;
   codigo: number;
-  descripcion: string;
-  activo: boolean;
+  descripcion?: string | null;
+  activo: boolean | number;
 }
 
 export interface MovimientoHistorial {
   id_historial: number;
   id_vehiculo: number;
-  id_comando: number;
-  comando: string;
-  codigo: number;
+  id_comando?: number | null;
+  comando: string | null;
+  codigo: number | null;
   origen: string;
-  fecha_ejecucion: string;
+  fecha_hora?: string | null;
+  fecha_ejecucion?: string | null;
 }
 
 export interface DemoItem {
