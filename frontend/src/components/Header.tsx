@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { WSStatus } from '../hooks/useVehicleWebSocket';
 import { getApiBaseUrl, setApiBaseUrl, getWsBaseUrl, setWsBaseUrl } from '../services/api';
 import {
-  WifiOff,
   Settings,
   RefreshCw,
   Cpu,
@@ -13,13 +11,10 @@ import {
   Minimize,
   Gamepad2,
   Server,
-  Database,
 } from 'lucide-react';
 
 interface HeaderProps {
-  wsStatus: WSStatus;
   vehicleConnected: boolean;
-  onReconnectWs: () => void;
   vehiculoId: number;
   setVehiculoId: (id: number) => void;
   keyboardEnabled: boolean;
@@ -29,12 +24,12 @@ interface HeaderProps {
   activeTab: 'control' | 'monitoring';
   setActiveTab: (tab: 'control' | 'monitoring') => void;
   apiHealthy?: boolean | null;
+  wsStatus?: any;
+  onReconnectWs?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  wsStatus,
   vehicleConnected,
-  onReconnectWs,
   vehiculoId,
   setVehiculoId,
   keyboardEnabled,
@@ -54,44 +49,6 @@ export const Header: React.FC<HeaderProps> = ({
     setWsBaseUrl(tempWs);
     setShowConfig(false);
     window.location.reload();
-  };
-
-  const getStatusBadge = () => {
-    switch (wsStatus) {
-      case 'connected':
-        return (
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-            title="WebSocket WSS: Sesión de navegador en línea con AWS EC2"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            WSS: <strong>En línea</strong>
-          </span>
-        );
-      case 'connecting':
-        return (
-          <span
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/80 text-amber-400 border border-amber-500/30"
-            title="WebSocket WSS: Estableciendo conexión segura..."
-          >
-            <RefreshCw className="w-2.5 h-2.5 animate-spin" />
-            WSS: <strong>Conectando...</strong>
-          </span>
-        );
-      case 'error':
-      case 'disconnected':
-      default:
-        return (
-          <button
-            onClick={onReconnectWs}
-            title="WebSocket WSS Desconectado. Haz clic para reintentar conexión"
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/80 text-rose-400 border border-rose-500/30 hover:bg-rose-900 transition-colors cursor-pointer"
-          >
-            <WifiOff className="w-2.5 h-2.5" />
-            WSS: <strong>Desconectado</strong>
-          </button>
-        );
-    }
   };
 
   const getApiStatusBadge = () => {
@@ -183,22 +140,10 @@ export const Header: React.FC<HeaderProps> = ({
             </nav>
           </div>
 
-          {/* LOS 3 INDICADORES INDEPENDIENTES DE CONECTIVIDAD + ACCIONES */}
+          {/* INDICADORES DE CONECTIVIDAD + ACCIONES */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {/* Indicador 1: WebSocket WSS (Sesión del navegador) */}
-            {getStatusBadge()}
-
-            {/* Indicador 2: Servidor AWS · API 21 servicios */}
+            {/* Servidor AWS · API 21 servicios */}
             {getApiStatusBadge()}
-
-            {/* Indicador 3: Amazon RDS (Sin verificar obligatorio por rúbrica) */}
-            <span
-              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800/80 text-slate-400 border border-slate-700"
-              title="Amazon RDS: Sin verificar. El backend no expone un endpoint seguro de diagnóstico directo de base de datos."
-            >
-              <Database className="w-2.5 h-2.5 text-slate-400" />
-              RDS: <strong>Sin verificar</strong>
-            </span>
 
             {/* Status Vehículo Microcontrolador (solo si está activo) */}
             <span
