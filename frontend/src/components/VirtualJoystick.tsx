@@ -2,12 +2,16 @@ import React, { useRef, useState, useCallback, useEffect } from 'react';
 
 interface VirtualJoystickProps {
   onCommand: (codigo: number, nombre: string) => void;
+  onStartContinuous?: (codigo: number, nombre: string) => void;
+  onStopContinuous?: () => void;
   disabled?: boolean;
   demoCommand?: string | null;
 }
 
 export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
   onCommand,
+  onStartContinuous,
+  onStopContinuous,
   disabled = false,
   demoCommand = null,
 }) => {
@@ -51,10 +55,14 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     setHandlePos({ x: 0, y: 0 });
     setActiveDir(null);
 
-    // Enviar DETENER solo cuando se suelta el joystick
+    // Enviar DETENER / Detener ráfaga continua solo cuando se suelta el joystick
     currentCmdRef.current = null;
-    onCommand(9, 'DETENER');
-  }, [onCommand]);
+    if (onStopContinuous) {
+      onStopContinuous();
+    } else {
+      onCommand(9, 'DETENER');
+    }
+  }, [onCommand, onStopContinuous]);
 
   const processPosition = (clientX: number, clientY: number) => {
     const base = baseRef.current;
@@ -110,7 +118,17 @@ export const VirtualJoystick: React.FC<VirtualJoystickProps> = ({
     if (newCmd !== currentCmdRef.current) {
       currentCmdRef.current = newCmd;
       if (newCmd !== null) {
-        onCommand(newCmd, cmdName);
+        if (onStartContinuous) {
+          onStartContinuous(newCmd, cmdName);
+        } else {
+          onCommand(newCmd, cmdName);
+        }
+      } else {
+        if (onStopContinuous) {
+          onStopContinuous();
+        } else {
+          onCommand(9, 'DETENER');
+        }
       }
     }
   };

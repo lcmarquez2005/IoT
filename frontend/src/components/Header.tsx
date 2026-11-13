@@ -301,7 +301,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:outline-none focus:border-amber-500 font-mono"
                 />
                 <span className="text-[11px] text-slate-500 mt-1 block">
-                  Usa <code className="text-amber-400">/api</code> (recomendado: elimina bloqueos de CORS y bypass de certificados)
+                  Usa <code className="text-amber-400">/api</code> (recomendado: elimina bloqueos de CORS)
                 </span>
               </div>
 

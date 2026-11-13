@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from './components/Header';
 import { VirtualJoystick } from './components/VirtualJoystick';
 import { ArmControls } from './components/ArmControls';
@@ -105,10 +105,23 @@ export function App() {
     }
   }, [lastMessage]);
 
+  // Refs para control de latido continuo (Heartbeat Press-and-Hold)
+  const continuousTimerRef = useRef<number | null>(null);
+  const activeContinuousRef = useRef<{ codigo: number; nombre: string } | null>(null);
+  const isSendingHttpRef = useRef(false);
+
   // Manejador centralizado de envío de comandos
   const handleSendCommand = useCallback(
     async (codigo: number, nombre: string) => {
+      // Si se envía DETENER (código 9), limpiar cualquier ráfaga activa
+      if (codigo === 9 && continuousTimerRef.current !== null) {
+        clearInterval(continuousTimerRef.current);
+        continuousTimerRef.current = null;
+        activeContinuousRef.current = null;
+      }
+
       setLastAction({ nombre, codigo });
+      isSendingHttpRef.current = true;
       try {
         const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
         setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
@@ -134,10 +147,59 @@ export function App() {
           type: 'error',
         });
         setTimeout(() => setNotification(null), 3500);
+      } finally {
+        isSendingHttpRef.current = false;
       }
     },
     [vehiculoId, wsStatus]
   );
+
+  // Detener ráfaga continua y emitir DETENER
+  const handleStopContinuous = useCallback(() => {
+    const wasActive = activeContinuousRef.current !== null || continuousTimerRef.current !== null;
+    if (continuousTimerRef.current !== null) {
+      clearInterval(continuousTimerRef.current);
+      continuousTimerRef.current = null;
+    }
+    activeContinuousRef.current = null;
+
+    if (wasActive) {
+      handleSendCommand(9, 'DETENER');
+    }
+  }, [handleSendCommand]);
+
+  // Iniciar ráfaga continua periódica (Heartbeat a 150 ms para refrescar el límite de 300 ms del ESP32)
+  const handleStartContinuous = useCallback(
+    (codigo: number, nombre: string) => {
+      if (activeContinuousRef.current?.codigo === codigo && continuousTimerRef.current !== null) {
+        return;
+      }
+
+      if (continuousTimerRef.current !== null) {
+        clearInterval(continuousTimerRef.current);
+        continuousTimerRef.current = null;
+      }
+
+      activeContinuousRef.current = { codigo, nombre };
+      handleSendCommand(codigo, nombre);
+
+      continuousTimerRef.current = window.setInterval(() => {
+        if (activeContinuousRef.current && !isSendingHttpRef.current) {
+          handleSendCommand(activeContinuousRef.current.codigo, activeContinuousRef.current.nombre);
+        }
+      }, 150);
+    },
+    [handleSendCommand]
+  );
+
+  // Limpiar temporizador al desmontar
+  useEffect(() => {
+    return () => {
+      if (continuousTimerRef.current !== null) {
+        clearInterval(continuousTimerRef.current);
+      }
+    };
+  }, []);
 
   // Combinar logs de WS con logs locales si los hay
   const combinedLogs = [...localLogs, ...eventLogs].slice(0, 100);
@@ -150,6 +212,8 @@ export function App() {
   // Teclado físico (solo activo en la vista Control)
   useKeyboardControls({
     onCommand: handleSendCommand,
+    onStartContinuous: handleStartContinuous,
+    onStopContinuous: handleStopContinuous,
     enabled: keyboardEnabled && activeTab === 'control',
   });
 
@@ -216,6 +280,8 @@ export function App() {
               <div className="w-full flex flex-col items-center justify-center">
                 <VirtualJoystick
                   onCommand={handleSendCommand}
+                  onStartContinuous={handleStartContinuous}
+                  onStopContinuous={handleStopContinuous}
                   demoCommand={demoCommand}
                   disabled={isDemoExecuting}
                 />
@@ -238,6 +304,8 @@ export function App() {
               <div className="w-full flex flex-col items-center justify-center">
                 <ArmControls
                   onCommand={handleSendCommand}
+                  onStartContinuous={handleStartContinuous}
+                  onStopContinuous={handleStopContinuous}
                   demoCommand={demoCommand}
                   disabled={isDemoExecuting}
                 />
