@@ -61,7 +61,7 @@ export class StatusIndicatorsManager {
       default:
         this.wsEl.classList.add('indicator-offline');
         this.wsEl.innerHTML = `${dot} <span>WebSocket WSS: <strong>Desconectado</strong></span>`;
-        this.wsEl.title = 'Sesión cerrada o bloqueada por certificado SSL auto-firmado';
+        this.wsEl.title = 'Sesión WebSocket fuera de línea';
         break;
     }
   }
