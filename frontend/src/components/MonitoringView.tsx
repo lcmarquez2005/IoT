@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { EstadoVehiculo, MovimientoHistorial, WSEventMessage, formatCommandName } from '../types/vehicle';
 import { obtenerEstadoVehiculo, obtenerHistorialVehiculo } from '../services/api';
 import { WSStatus } from '../hooks/useVehicleWebSocket';
+import { TelemetryLog } from './TelemetryLog';
 import {
   Activity,
   History,
@@ -20,6 +21,8 @@ interface MonitoringViewProps {
   vehiculoId: number;
   lastWsMessage: WSEventMessage | null;
   wsStatus: WSStatus;
+  eventLogs?: WSEventMessage[];
+  onClearLogs?: () => void;
 }
 
 interface FormattedMovementItem {
@@ -37,6 +40,8 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
   vehiculoId,
   lastWsMessage,
   wsStatus,
+  eventLogs = [],
+  onClearLogs,
 }) => {
   const [estado, setEstado] = useState<EstadoVehiculo | null>(null);
   const [historial, setHistorial] = useState<FormattedMovementItem[]>([]);
@@ -513,6 +518,18 @@ export const MonitoringView: React.FC<MonitoringViewProps> = ({
           </span>
         </div>
       </div>
+
+      {/* SECCIÓN 3: LOG DE EVENTOS Y TELEMETRÍA EN VIVO (CENTRALIZADO EN MONITOREO) */}
+      {onClearLogs && (
+        <div className="pt-2">
+          <TelemetryLog
+            vehiculoId={vehiculoId}
+            eventLogs={eventLogs}
+            onClearLogs={onClearLogs}
+            lastMessage={lastWsMessage}
+          />
+        </div>
+      )}
     </div>
   );
 };

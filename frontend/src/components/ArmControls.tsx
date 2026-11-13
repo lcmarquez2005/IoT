@@ -57,84 +57,107 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full select-none">
-      {/* Cluster Ergonómico Gamepad (2x2 Grid) - Altura sincronizada con el Joystick */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full max-w-[240px] sm:max-w-[260px]">
-        {/* SUBIR BRAZO (Código 5) */}
-        <button
-          onPointerDown={(e) => handlePressStart(5, 'SUBIR_BRAZO', e)}
-          onPointerUp={handlePressEnd}
-          onPointerCancel={handlePressEnd}
-          onClick={(e) => e.preventDefault()}
-          disabled={disabled}
-          title="Subir Brazo Articulado (K)"
-          className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
-            isSubirDemo || activeButton === 5
-              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
-              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
-          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+    <div className="flex flex-col items-center justify-center w-full select-none touch-none">
+      {/* Cruceta Ergonómica Gamepad (D-Pad Cross 3x3) - Mismas dimensiones que el Joystick */}
+      <div className="relative w-40 h-40 sm:w-48 sm:h-48 flex items-center justify-center">
+        {/* Chasis exterior de la cruceta con relieve */}
+        <div
+          className="grid grid-cols-3 grid-rows-3 gap-1 sm:gap-1.5 w-full h-full p-1 sm:p-1.5 rounded-3xl border-4 border-slate-700 bg-gradient-to-b from-slate-800/90 to-slate-950 shadow-xl"
+          style={{
+            boxShadow: 'inset 0 4px 16px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)',
+          }}
         >
-          <ArrowUpCircle className="w-6 h-6 text-amber-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Subir Brazo</span>
-        </button>
+          {/* Fila 1: Arriba -> SUBIR BRAZO (Código 5) */}
+          <div className="col-start-2 row-start-1 flex items-center justify-center">
+            <button
+              onPointerDown={(e) => handlePressStart(5, 'SUBIR_BRAZO', e)}
+              onPointerUp={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onClick={(e) => e.preventDefault()}
+              disabled={disabled}
+              title="Subir Brazo Articulado (K)"
+              className={`w-full h-full rounded-t-2xl rounded-b-md border-2 flex flex-col items-center justify-center transition-all cursor-pointer shadow-md touch-none select-none ${
+                isSubirDemo || activeButton === 5
+                  ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
+                  : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-amber-400/50 active:bg-amber-500 active:text-black'
+              } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+            >
+              <ArrowUpCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">SUBIR</span>
+            </button>
+          </div>
 
-        {/* BAJAR BRAZO (Código 6) */}
-        <button
-          onPointerDown={(e) => handlePressStart(6, 'BAJAR_BRAZO', e)}
-          onPointerUp={handlePressEnd}
-          onPointerCancel={handlePressEnd}
-          onClick={(e) => e.preventDefault()}
-          disabled={disabled}
-          title="Bajar Brazo Articulado (J)"
-          className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
-            isBajarDemo || activeButton === 6
-              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
-              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
-          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-        >
-          <ArrowDownCircle className="w-6 h-6 text-amber-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Bajar Brazo</span>
-        </button>
+          {/* Fila 2: Izquierda -> ROTAR IZQUIERDA (Código 8) */}
+          <div className="col-start-1 row-start-2 flex items-center justify-center">
+            <button
+              onPointerDown={(e) => handlePressStart(8, 'ROTAR_IZQUIERDA', e)}
+              onPointerUp={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onClick={(e) => e.preventDefault()}
+              disabled={disabled}
+              title="Rotar Torreta Izquierda (L)"
+              className={`w-full h-full rounded-l-2xl rounded-r-md border-2 flex flex-col items-center justify-center transition-all cursor-pointer shadow-md touch-none select-none ${
+                isCerrarDemo || activeButton === 8
+                  ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
+                  : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-cyan-400/50 active:bg-cyan-500 active:text-black'
+              } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+            >
+              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">IZQ</span>
+            </button>
+          </div>
 
-        {/* ROTAR DERECHA (Código 7, catalogado en DB como ABRIR_PALA) */}
-        <button
-          onPointerDown={(e) => handlePressStart(7, 'ROTAR_DERECHA', e)}
-          onPointerUp={handlePressEnd}
-          onPointerCancel={handlePressEnd}
-          onClick={(e) => e.preventDefault()}
-          disabled={disabled}
-          title="Rotar Torreta Derecha (H)"
-          className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
-            isAbrirDemo || activeButton === 7
-              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
-              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
-          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-        >
-          <RotateCw className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Rotar Derecha</span>
-        </button>
+          {/* Fila 2: Centro -> Pivote central neutral */}
+          <div className="col-start-2 row-start-2 flex items-center justify-center pointer-events-none">
+            <div className="w-full h-full rounded-lg bg-slate-950/90 border border-slate-800 flex items-center justify-center shadow-inner">
+              <div className="w-3.5 h-3.5 rounded-full bg-slate-800 border border-slate-700/80 shadow-sm" />
+            </div>
+          </div>
 
-        {/* ROTAR IZQUIERDA (Código 8, catalogado en DB como CERRAR_PALA) */}
-        <button
-          onPointerDown={(e) => handlePressStart(8, 'ROTAR_IZQUIERDA', e)}
-          onPointerUp={handlePressEnd}
-          onPointerCancel={handlePressEnd}
-          onClick={(e) => e.preventDefault()}
-          disabled={disabled}
-          title="Rotar Torreta Izquierda (L)"
-          className={`h-19 sm:h-23 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md touch-none select-none ${
-            isCerrarDemo || activeButton === 8
-              ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
-              : 'bg-gradient-to-b from-slate-800 to-slate-900 text-slate-100 border-slate-700/80 hover:bg-slate-750 hover:border-cyan-500/50 active:bg-cyan-500 active:text-black'
-          } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
-        >
-          <RotateCcw className="w-5.5 h-5.5 text-cyan-400 stroke-[2.2]" />
-          <span className="text-[11px] sm:text-xs font-bold leading-none">Rotar Izquierda</span>
-        </button>
+          {/* Fila 2: Derecha -> ROTAR DERECHA (Código 7) */}
+          <div className="col-start-3 row-start-2 flex items-center justify-center">
+            <button
+              onPointerDown={(e) => handlePressStart(7, 'ROTAR_DERECHA', e)}
+              onPointerUp={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onClick={(e) => e.preventDefault()}
+              disabled={disabled}
+              title="Rotar Torreta Derecha (H)"
+              className={`w-full h-full rounded-r-2xl rounded-l-md border-2 flex flex-col items-center justify-center transition-all cursor-pointer shadow-md touch-none select-none ${
+                isAbrirDemo || activeButton === 7
+                  ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
+                  : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-cyan-400/50 active:bg-cyan-500 active:text-black'
+              } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+            >
+              <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">DER</span>
+            </button>
+          </div>
+
+          {/* Fila 3: Abajo -> BAJAR BRAZO (Código 6) */}
+          <div className="col-start-2 row-start-3 flex items-center justify-center">
+            <button
+              onPointerDown={(e) => handlePressStart(6, 'BAJAR_BRAZO', e)}
+              onPointerUp={handlePressEnd}
+              onPointerCancel={handlePressEnd}
+              onClick={(e) => e.preventDefault()}
+              disabled={disabled}
+              title="Bajar Brazo Articulado (J)"
+              className={`w-full h-full rounded-b-2xl rounded-t-md border-2 flex flex-col items-center justify-center transition-all cursor-pointer shadow-md touch-none select-none ${
+                isBajarDemo || activeButton === 6
+                  ? 'bg-amber-500 text-black border-amber-300 shadow-[0_0_12px_rgba(245,158,11,0.6)] scale-95'
+                  : 'bg-gradient-to-b from-slate-750 to-slate-850 text-slate-100 border-slate-700 hover:border-amber-400/50 active:bg-amber-500 active:text-black'
+              } ${disabled ? 'opacity-40 cursor-not-allowed pointer-events-none' : ''}`}
+            >
+              <ArrowDownCircle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 stroke-[2.2]" />
+              <span className="text-[8px] sm:text-[9px] font-bold leading-none mt-0.5 tracking-tight">BAJAR</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <span className="text-[9px] text-slate-500 mt-1 font-mono">
-        Mantén presionado para mover · Suelta para detener
+        Cruceta: Brazo (▲/▼) • Rotación (◀/▶)
       </span>
     </div>
   );

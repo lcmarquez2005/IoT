@@ -3,7 +3,6 @@ import { Header } from './components/Header';
 import { VirtualJoystick } from './components/VirtualJoystick';
 import { ArmControls } from './components/ArmControls';
 import { CenterConsole } from './components/CenterConsole';
-import { TelemetryLog } from './components/TelemetryLog';
 import { MonitoringView } from './components/MonitoringView';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
@@ -412,24 +411,16 @@ export function App() {
               </div>
             </div>
           </div>
-
-          {/* Panel secundario de Telemetría expandible en pantallas medianas/grandes */}
-          <div className="mt-4 hidden lg:block">
-            <TelemetryLog
-              vehiculoId={vehiculoId}
-              eventLogs={combinedLogs}
-              onClearLogs={handleClearLogs}
-              lastMessage={lastMessage}
-            />
-          </div>
         </div>
 
-        {/* VISTA 2: MONITOREO EN TIEMPO REAL (PRÁCTICA 4.2) */}
+        {/* VISTA 2: MONITOREO EN TIEMPO REAL (PRÁCTICA 4.2 - TELEMETRÍA E HISTORIAL) */}
         <div className={activeTab === 'monitoring' ? 'block' : 'hidden'}>
           <MonitoringView
             vehiculoId={vehiculoId}
             lastWsMessage={lastMessage}
             wsStatus={wsStatus}
+            eventLogs={combinedLogs}
+            onClearLogs={handleClearLogs}
           />
         </div>
       </main>
