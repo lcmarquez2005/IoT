@@ -63,8 +63,13 @@ unsigned long tiempoInicioAccion = 0;
 unsigned long duracionAccionMs   = 0;
 bool accionEnCurso              = false;
 
+// Estado del control remoto (rastrea si está encendido o apagado)
+bool controlRemotoEncendido     = false;
+
 // Duraciones por defecto
-const unsigned long DURACION_PULSO_AUXILIAR_MS = 60;  // Para botones de pulso (luz, música, power)
+const unsigned long DURACION_PULSO_AUXILIAR_MS  = 60;   // Para botones de pulso corto (luz, música)
+const unsigned long DURACION_PULSO_ENCENDIDO_MS = 100;  // Pulso corto para encender el control remoto
+const unsigned long DURACION_PULSO_APAGADO_MS   = 3000; // Pulso sostenido de 3 segundos para apagar el control remoto
 const unsigned long DURACION_MOVIMIENTO_DEFAULT = 300; // Reducido a 300 ms (la mitad) para seguridad y latido continuo
 
 // Control del botón físico de reset de Wi-Fi (5 segundos a GND)
@@ -200,9 +205,48 @@ void despacharComando(int codigo, const char* comando, unsigned long duracion) {
     return;
   }
 
-  // 10. ENCENDIDO / CONTROL REMOTO (Pulso corto)
-  if (codigo == 10 || (comando != nullptr && (strcasecmp(comando, "ENCENDER") == 0 || strcasecmp(comando, "CONTROL_REMOTO") == 0))) {
-    ejecutarCanal(MASK_POWER_CONTROL, DURACION_PULSO_AUXILIAR_MS, "ENCENDIDO REMOTO (Salida 7)");
+  // 10. ENCENDIDO / APAGADO DEL CONTROL REMOTO
+  // El control remoto físico se enciende con un pulso corto (100 ms).
+  // Para apagarse luego de que se encendió, requiere mantener presionado el pulso por 3 segundos (3000 ms).
+  if (codigo == 10 || (comando != nullptr && (
+      strcasecmp(comando, "ENCENDER") == 0 ||
+      strcasecmp(comando, "APAGAR") == 0 ||
+      strcasecmp(comando, "CONTROL_REMOTO") == 0 ||
+      strcasecmp(comando, "POWER") == 0 ||
+      strcasecmp(comando, "APAGAR_CONTROL") == 0 ||
+      strcasecmp(comando, "ENCENDER_CONTROL") == 0 ||
+      strcasecmp(comando, "POWER_OFF") == 0 ||
+      strcasecmp(comando, "POWER_ON") == 0
+  ))) {
+    // Si ya hay una acción de encendido o apagado en curso, evitar reentrancia
+    if (accionEnCurso && (estadoSalidasActual & MASK_POWER_CONTROL)) {
+      Serial.println("[CONTROL REMOTO] Pulso de encendido/apagado ya en progreso. Esperando finalización...");
+      return;
+    }
+
+    bool comandoEsApagar = (comando != nullptr && (
+      strcasecmp(comando, "APAGAR") == 0 ||
+      strcasecmp(comando, "APAGAR_CONTROL") == 0 ||
+      strcasecmp(comando, "POWER_OFF") == 0
+    ));
+
+    bool comandoEsEncender = (comando != nullptr && (
+      strcasecmp(comando, "ENCENDER_CONTROL") == 0 ||
+      strcasecmp(comando, "POWER_ON") == 0
+    ));
+
+    // Si viene orden explícita de apagar, o si ya estaba encendido (y no es orden explícita de encender):
+    if (comandoEsApagar || (!comandoEsEncender && controlRemotoEncendido)) {
+      Serial.println("[CONTROL REMOTO] -> APAGANDO: Manteniendo pulso presionado durante 3 segundos...");
+      ejecutarCanal(MASK_POWER_CONTROL, DURACION_PULSO_APAGADO_MS, "APAGAR CONTROL REMOTO (Salida 7 - 3 Segundos)");
+      controlRemotoEncendido = false;
+      Serial.println("[CONTROL REMOTO] Estado lógico actualizado: APAGADO");
+    } else {
+      Serial.println("[CONTROL REMOTO] -> ENCENDIENDO: Enviando pulso corto...");
+      ejecutarCanal(MASK_POWER_CONTROL, DURACION_PULSO_ENCENDIDO_MS, "ENCENDER CONTROL REMOTO (Salida 7 - Pulso Corto)");
+      controlRemotoEncendido = true;
+      Serial.println("[CONTROL REMOTO] Estado lógico actualizado: ENCENDIDO");
+    }
     return;
   }
 
@@ -408,7 +452,11 @@ void verificarComandosSerial() {
       case 'j': case 'J': despacharComando(6, "BAJAR_BRAZO", DURACION_MOVIMIENTO_DEFAULT); break;
       case 'h': case 'H': despacharComando(7, "ROTAR_IZQ", DURACION_MOVIMIENTO_DEFAULT); break;
       case 'l': case 'L': despacharComando(8, "ROTAR_DER", DURACION_MOVIMIENTO_DEFAULT); break;
-      case '1': despacharComando(10, "ENCENDER", DURACION_PULSO_AUXILIAR_MS); break;
+      case '1':
+      case 'p':
+      case 'P':
+        despacharComando(10, "CONTROL_REMOTO", 0);
+        break;
       case '2': despacharComando(12, "TOGGLE_LIGHT", DURACION_PULSO_AUXILIAR_MS); break;
       case '3': despacharComando(11, "TOGGLE_MUSIC", DURACION_PULSO_AUXILIAR_MS); break;
       case '4': despacharComando(0, "MODO_DEMO_REMOTO", DURACION_PULSO_AUXILIAR_MS); break;
@@ -433,7 +481,7 @@ void mostrarBannerInicio() {
   Serial.printf("Pines 74HC595: DATA=%d, CLOCK=%d, LATCH=%d\n", PIN_DATA, PIN_CLOCK, PIN_LATCH);
   Serial.printf("Pin Reset WiFi: GPIO %d (5 seg a GND)\n", PIN_RESET_WIFI);
   Serial.println("--------------------------------------------------------");
-  Serial.println("Comandos Serial de Prueba Local: W/S/A/D, H/L, K/J, 1..4, '0'=Stop, 'R'=Reset WiFi");
+  Serial.println("Comandos Serial de Prueba Local: W/S/A/D, H/L, K/J, 1/P (Power: Corto / 3s), 2 (Luz), 3 (Musica), 4 (Demo), '0'=Stop, 'R'=Reset WiFi");
   Serial.println("========================================================\n");
 }
 

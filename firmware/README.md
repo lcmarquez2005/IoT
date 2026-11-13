@@ -53,10 +53,14 @@ Instalar desde el **Gestor de Bibliotecas** de Arduino IDE (`Ctrl + Shift + I`):
 | **Rotar Cabina Izq / Pala** | 7 | `ABRIR_PALA` / `ROTAR_IZQ` | Salida 8 (Chip 1 Q7) | Bit 7 | `1 << 7` |
 | **Rotar Cabina Der / Pala** | 8 | `CERRAR_PALA` / `ROTAR_DER`| Salida 1 (Chip 1 Q0) | Bit 0 | `1 << 0` |
 | **Detener / Stop** | 9 | `DETENER` | - | - | `0x0000` |
-| **Encendido Remoto** | 10 | `ENCENDER` | Salida 7 (Chip 1 Q6) | Bit 6 | `1 << 6` |
+| **Encendido / Apagado Remoto** | 10 | `ENCENDER` / `APAGAR` | Salida 7 (Chip 1 Q6) | Bit 6 | `1 << 6` |
 | **Música** | 11 | `TOGGLE_MUSIC` | Salida 10 (Chip 2 Q1) | Bit 9 | `1 << 9` |
 | **Luz / Faro** | 12 | `TOGGLE_LIGHT` | Salida 3 (Chip 1 Q2) | Bit 2 | `1 << 2` |
 | **Modo Demo RC** | - | `DEMO_REMOTO` | Salida 4 (Chip 1 Q3) | Bit 3 | `1 << 3` |
+
+> **Nota sobre el Encendido / Apagado del Control Remoto:**  
+> - **Encendido:** Requiere un pulso corto (100 ms).  
+> - **Apagado:** Una vez encendido, para apagar el control el pulsador debe mantenerse presionado durante **3 segundos (3000 ms)** continuos. El firmware gestiona automáticamente este ciclo de forma 100% no bloqueante con `millis()`, reconociendo tanto la alternancia sucesiva del comando 10 / botón Power, como órdenes explícitas de `APAGAR` / `POWER_OFF`.
 
 ---
 

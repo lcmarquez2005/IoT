@@ -7,10 +7,15 @@ const byte PIN_LATCH = 5;  // STCP (Latch Clock)
 
 uint16_t estadoSalidas = 0;
 
-// Variables para el apagado automático de pulsos cortos (50 ms)
+// Variables para el apagado automático de pulsos
 unsigned long tiempoInicioPulso = 0;
+unsigned long duracionPulsoActual = 50;
 bool pulsoActivo = false;
-const unsigned long DURACION_PULSO_MS = 50;
+bool controlRemotoEncendido = false;
+
+const unsigned long DURACION_PULSO_CORTO_MS   = 100;  // Pulso corto de encendido (100 ms)
+const unsigned long DURACION_PULSO_APAGADO_MS = 3000; // Pulso sostenido de 3 segundos para apagar
+const unsigned long DURACION_PULSO_DEFAULT_MS = 50;   // Para funciones auxiliares
 
 void actualizarSalidas(uint16_t valor) {
   byte byteAlto = (valor >> 8) & 0xFF; // Bits 8 al 15 -> Chip 2
@@ -37,13 +42,13 @@ void mover(uint16_t mascara, const char* nombre) {
   Serial.println(nombre);
 }
 
-// Para funciones momentáneas que deben apagarse solas tras 50 ms
-void pulsar(uint16_t mascara, const char* nombre) {
+// Para funciones de pulso temporizado (no bloqueante)
+void pulsar(uint16_t mascara, const char* nombre, unsigned long duracionMs = DURACION_PULSO_DEFAULT_MS) {
   actualizarSalidas(mascara);
   tiempoInicioPulso = millis();
+  duracionPulsoActual = duracionMs;
   pulsoActivo = true;
-  Serial.print("[PULSO 50ms] Ejecutando: ");
-  Serial.println(nombre);
+  Serial.printf("[PULSO %lu ms] Ejecutando: %s\n", duracionMs, nombre);
 }
 
 void mostrarBienvenida() {
@@ -112,10 +117,10 @@ void setup() {
 }
 
 void loop() {
-  // Manejo de apagado automático tras 50 ms (sin delay bloqueante)
-  if (pulsoActivo && (millis() - tiempoInicioPulso >= DURACION_PULSO_MS)) {
+  // Manejo de apagado automático por temporizador (sin delay bloqueante)
+  if (pulsoActivo && (millis() - tiempoInicioPulso >= duracionPulsoActual)) {
     apagarTodo();
-    Serial.println("[AUTO-OFF] Pulso de 50 ms finalizado.");
+    Serial.println("[AUTO-OFF] Pulso temporizado finalizado. Salidas liberadas.");
   }
 
   if (Serial.available() > 0) {
@@ -164,9 +169,17 @@ void loop() {
         mover(1 << 5, "BAJAR BRAZO (Salida 6)"); 
         break;
 
-      // --- PULSOS CORTOS (50 ms) ---
+      // --- PULSOS AUXILIARES ---
       case '1': 
-        pulsar(1 << 6, "ENCENDIDO / APAGADO (Salida 7)"); 
+        if (!controlRemotoEncendido) {
+          pulsar(1 << 6, "ENCENDIDO CONTROL (Salida 7 - Pulso Corto)", DURACION_PULSO_CORTO_MS);
+          controlRemotoEncendido = true;
+          Serial.println("[ESTADO CONTROL] Encendido.");
+        } else {
+          pulsar(1 << 6, "APAGADO CONTROL (Salida 7 - 3 Segundos)", DURACION_PULSO_APAGADO_MS);
+          controlRemotoEncendido = false;
+          Serial.println("[ESTADO CONTROL] Apagado tras pulso de 3s.");
+        }
         break;
 
       case '2': 

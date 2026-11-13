@@ -81,12 +81,18 @@ export function setWsBaseUrl(url: string): void {
   }
 }
 
-export async function enviarMovimiento(idVehiculo: number, codigo: number, origen: string = 'REACT_DASHBOARD') {
+export async function enviarMovimiento(
+  idVehiculo: number,
+  codigo: number,
+  origen: string = 'REACT_DASHBOARD',
+  signal?: AbortSignal
+) {
   const baseUrl = getApiBaseUrl();
   const response = await fetch(`${baseUrl}/vehiculos/${idVehiculo}/movimiento`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ codigo, origen }),
+    signal,
   });
 
   if (!response.ok) {

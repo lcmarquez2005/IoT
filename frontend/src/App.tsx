@@ -127,29 +127,56 @@ export function App() {
     }
   }, [lastMessage]);
 
-  // Refs para control de latido continuo (Heartbeat Press-and-Hold)
+  // Refs para control de latido continuo y transiciones fluidas de ultra-baja latencia
   const continuousTimerRef = useRef<number | null>(null);
   const activeContinuousRef = useRef<{ codigo: number; nombre: string } | null>(null);
-  const isSendingHttpRef = useRef(false);
+  const stopDebounceTimerRef = useRef<number | null>(null);
+  const isSendingHeartbeatRef = useRef(false);
+  const heartbeatAbortRef = useRef<AbortController | null>(null);
 
   // Manejador centralizado de envío de comandos
   const handleSendCommand = useCallback(
-    async (codigo: number, nombre: string) => {
-      // Si se envía DETENER (código 9), limpiar cualquier ráfaga activa
-      if (codigo === 9 && continuousTimerRef.current !== null) {
-        clearInterval(continuousTimerRef.current);
-        continuousTimerRef.current = null;
+    async (codigo: number, nombre: string, isHeartbeat: boolean = false) => {
+      // Si se envía DETENER (código 9), limpiar ráfagas y cancelar latidos pendientes
+      if (codigo === 9) {
+        if (continuousTimerRef.current !== null) {
+          clearInterval(continuousTimerRef.current);
+          continuousTimerRef.current = null;
+        }
+        if (stopDebounceTimerRef.current !== null) {
+          clearTimeout(stopDebounceTimerRef.current);
+          stopDebounceTimerRef.current = null;
+        }
         activeContinuousRef.current = null;
       }
 
-      setLastAction({ nombre, codigo });
-      isSendingHttpRef.current = true;
+      // Si es una orden nueva del usuario (no un latido repetido), abortar cualquier latido previo en vuelo
+      if (!isHeartbeat) {
+        if (heartbeatAbortRef.current) {
+          try {
+            heartbeatAbortRef.current.abort();
+          } catch {}
+          heartbeatAbortRef.current = null;
+        }
+        setLastAction({ nombre, codigo });
+      }
+
+      let signal: AbortSignal | undefined;
+      if (isHeartbeat) {
+        isSendingHeartbeatRef.current = true;
+        const ctrl = new AbortController();
+        heartbeatAbortRef.current = ctrl;
+        signal = ctrl.signal;
+      }
+
       try {
-        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD');
-        setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
+        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD', signal);
+        if (!isHeartbeat) {
+          setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
+        }
 
         // Si el WS no estuviera conectado en este instante, registrar en el log local para feedback inmediato
-        if (wsStatus !== 'connected' && res) {
+        if (wsStatus !== 'connected' && res && !isHeartbeat) {
           const mockMsg: WSEventMessage = {
             evento: 'MOVIMIENTO_INDIVIDUAL',
             id_vehiculo: vehiculoId,
@@ -162,21 +189,29 @@ export function App() {
           setLocalLogs((prev) => [mockMsg, ...prev.slice(0, 49)]);
         }
       } catch (err: any) {
+        // Ignorar abortos provocados intencionalmente por cambio inmediato de dirección
+        if (err.name === 'AbortError') {
+          return;
+        }
         console.error('Error enviando comando:', err);
-        setLastHttpResult(`Error: ${err.message}`);
-        setNotification({
-          msg: err.message || `Fallo al enviar comando ${nombre}`,
-          type: 'error',
-        });
-        setTimeout(() => setNotification(null), 3500);
+        if (!isHeartbeat) {
+          setLastHttpResult(`Error: ${err.message}`);
+          setNotification({
+            msg: err.message || `Fallo al enviar comando ${nombre}`,
+            type: 'error',
+          });
+          setTimeout(() => setNotification(null), 3500);
+        }
       } finally {
-        isSendingHttpRef.current = false;
+        if (isHeartbeat) {
+          isSendingHeartbeatRef.current = false;
+        }
       }
     },
     [vehiculoId, wsStatus]
   );
 
-  // Detener ráfaga continua y emitir DETENER
+  // Detener ráfaga continua con buffer inteligente (40 ms) para evitar frenado en transiciones rápidas
   const handleStopContinuous = useCallback(() => {
     const wasActive = activeContinuousRef.current !== null || continuousTimerRef.current !== null;
     if (continuousTimerRef.current !== null) {
@@ -185,14 +220,29 @@ export function App() {
     }
     activeContinuousRef.current = null;
 
+    if (stopDebounceTimerRef.current !== null) {
+      clearTimeout(stopDebounceTimerRef.current);
+      stopDebounceTimerRef.current = null;
+    }
+
     if (wasActive) {
-      handleSendCommand(9, 'DETENER');
+      // 40 ms de margen: si el usuario pasa rápido a otra tecla, se cancela este DETENER
+      stopDebounceTimerRef.current = window.setTimeout(() => {
+        stopDebounceTimerRef.current = null;
+        handleSendCommand(9, 'DETENER');
+      }, 40);
     }
   }, [handleSendCommand]);
 
-  // Iniciar ráfaga continua periódica (Heartbeat a 150 ms para refrescar el límite de 300 ms del ESP32)
+  // Iniciar ráfaga continua periódica (Heartbeat a 110 ms para mantener cómodo el watchdog de 300 ms del ESP32)
   const handleStartContinuous = useCallback(
     (codigo: number, nombre: string) => {
+      // Si había un DETENER programado, cancelarlo de inmediato: es una transición directa
+      if (stopDebounceTimerRef.current !== null) {
+        clearTimeout(stopDebounceTimerRef.current);
+        stopDebounceTimerRef.current = null;
+      }
+
       if (activeContinuousRef.current?.codigo === codigo && continuousTimerRef.current !== null) {
         return;
       }
@@ -202,23 +252,41 @@ export function App() {
         continuousTimerRef.current = null;
       }
 
-      activeContinuousRef.current = { codigo, nombre };
-      handleSendCommand(codigo, nombre);
+      // Abortar cualquier latido previo obsoleto
+      if (heartbeatAbortRef.current) {
+        try {
+          heartbeatAbortRef.current.abort();
+        } catch {}
+        heartbeatAbortRef.current = null;
+      }
 
+      activeContinuousRef.current = { codigo, nombre };
+      // Enviar la nueva dirección inmediatamente
+      handleSendCommand(codigo, nombre, false);
+
+      // Latido continuo a 110 ms (garantiza que el ESP32 nunca se quede sin comando antes de 300 ms)
       continuousTimerRef.current = window.setInterval(() => {
-        if (activeContinuousRef.current && !isSendingHttpRef.current) {
-          handleSendCommand(activeContinuousRef.current.codigo, activeContinuousRef.current.nombre);
+        if (activeContinuousRef.current && !isSendingHeartbeatRef.current) {
+          handleSendCommand(activeContinuousRef.current.codigo, activeContinuousRef.current.nombre, true);
         }
-      }, 150);
+      }, 110);
     },
     [handleSendCommand]
   );
 
-  // Limpiar temporizador al desmontar
+  // Limpiar temporizadores al desmontar
   useEffect(() => {
     return () => {
       if (continuousTimerRef.current !== null) {
         clearInterval(continuousTimerRef.current);
+      }
+      if (stopDebounceTimerRef.current !== null) {
+        clearTimeout(stopDebounceTimerRef.current);
+      }
+      if (heartbeatAbortRef.current) {
+        try {
+          heartbeatAbortRef.current.abort();
+        } catch {}
       }
     };
   }, []);
