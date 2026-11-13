@@ -65,7 +65,7 @@ bool accionEnCurso              = false;
 
 // Duraciones por defecto
 const unsigned long DURACION_PULSO_AUXILIAR_MS = 60;  // Para botones de pulso (luz, música, power)
-const unsigned long DURACION_MOVIMIENTO_DEFAULT = 600; // Si el POST individual no manda duracion
+const unsigned long DURACION_MOVIMIENTO_DEFAULT = 300; // Reducido a 300 ms (la mitad) para seguridad y latido continuo
 
 // Control del botón físico de reset de Wi-Fi (5 segundos a GND)
 unsigned long tiempoPulsadoResetWifi = 0;
@@ -400,14 +400,14 @@ void verificarComandosSerial() {
 
     // Comandos locales de prueba directa de hardware
     switch (c) {
-      case 'w': case 'W': despacharComando(1, "AVANZAR", 600); break;
-      case 's': case 'S': despacharComando(2, "RETROCEDER", 600); break;
-      case 'a': case 'A': despacharComando(3, "GIRAR_IZQUIERDA", 600); break;
-      case 'd': case 'D': despacharComando(4, "GIRAR_DERECHA", 600); break;
-      case 'k': case 'K': despacharComando(5, "SUBIR_BRAZO", 600); break;
-      case 'j': case 'J': despacharComando(6, "BAJAR_BRAZO", 600); break;
-      case 'h': case 'H': despacharComando(7, "ROTAR_IZQ", 600); break;
-      case 'l': case 'L': despacharComando(8, "ROTAR_DER", 600); break;
+      case 'w': case 'W': despacharComando(1, "AVANZAR", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 's': case 'S': despacharComando(2, "RETROCEDER", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'a': case 'A': despacharComando(3, "GIRAR_IZQUIERDA", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'd': case 'D': despacharComando(4, "GIRAR_DERECHA", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'k': case 'K': despacharComando(5, "SUBIR_BRAZO", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'j': case 'J': despacharComando(6, "BAJAR_BRAZO", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'h': case 'H': despacharComando(7, "ROTAR_IZQ", DURACION_MOVIMIENTO_DEFAULT); break;
+      case 'l': case 'L': despacharComando(8, "ROTAR_DER", DURACION_MOVIMIENTO_DEFAULT); break;
       case '1': despacharComando(10, "ENCENDER", DURACION_PULSO_AUXILIAR_MS); break;
       case '2': despacharComando(12, "TOGGLE_LIGHT", DURACION_PULSO_AUXILIAR_MS); break;
       case '3': despacharComando(11, "TOGGLE_MUSIC", DURACION_PULSO_AUXILIAR_MS); break;

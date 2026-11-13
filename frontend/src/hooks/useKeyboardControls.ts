@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 
 interface KeyboardControlsProps {
   onCommand: (codigo: number, nombre: string) => void;
+  onStartContinuous?: (codigo: number, nombre: string) => void;
+  onStopContinuous?: () => void;
   enabled?: boolean;
 }
 
-export function useKeyboardControls({ onCommand, enabled = true }: KeyboardControlsProps) {
+export function useKeyboardControls({
+  onCommand,
+  onStartContinuous,
+  onStopContinuous,
+  enabled = true,
+}: KeyboardControlsProps) {
   const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -23,54 +30,66 @@ export function useKeyboardControls({ onCommand, enabled = true }: KeyboardContr
       const key = e.key.toLowerCase();
       setActiveKey(key);
 
+      const triggerContinuous = (code: number, name: string) => {
+        if (onStartContinuous) {
+          onStartContinuous(code, name);
+        } else {
+          onCommand(code, name);
+        }
+      };
+
       switch (key) {
         // --- MOVIMIENTO BASE ---
         case 'w':
         case 'arrowup':
           e.preventDefault();
-          onCommand(1, 'AVANZAR');
+          triggerContinuous(1, 'AVANZAR');
           break;
         case 's':
         case 'arrowdown':
           e.preventDefault();
-          onCommand(2, 'RETROCEDER');
+          triggerContinuous(2, 'RETROCEDER');
           break;
         case 'a':
         case 'arrowleft':
           e.preventDefault();
-          onCommand(3, 'GIRAR_IZQUIERDA');
+          triggerContinuous(3, 'GIRAR_IZQUIERDA');
           break;
         case 'd':
         case 'arrowright':
           e.preventDefault();
-          onCommand(4, 'GIRAR_DERECHA');
+          triggerContinuous(4, 'GIRAR_DERECHA');
           break;
 
         // --- BRAZO Y TORRE ---
         case 'k':
           e.preventDefault();
-          onCommand(5, 'SUBIR_BRAZO');
+          triggerContinuous(5, 'SUBIR_BRAZO');
           break;
         case 'j':
           e.preventDefault();
-          onCommand(6, 'BAJAR_BRAZO');
+          triggerContinuous(6, 'BAJAR_BRAZO');
           break;
         case 'h':
           e.preventDefault();
-          onCommand(7, 'ABRIR_PALA');
+          triggerContinuous(7, 'ABRIR_PALA');
           break;
         case 'l':
           e.preventDefault();
-          onCommand(8, 'CERRAR_PALA');
+          triggerContinuous(8, 'CERRAR_PALA');
           break;
 
         // --- PARO DE EMERGENCIA ---
         case ' ':
           e.preventDefault();
-          onCommand(9, 'DETENER');
+          if (onStopContinuous) {
+            onStopContinuous();
+          } else {
+            onCommand(9, 'DETENER');
+          }
           break;
 
-        // --- AUXILIARES ---
+        // --- AUXILIARES (Pulso único) ---
         case '1':
           e.preventDefault();
           onCommand(10, 'ENCENDER');
@@ -93,9 +112,13 @@ export function useKeyboardControls({ onCommand, enabled = true }: KeyboardContr
       const key = e.key.toLowerCase();
       setActiveKey(null);
 
-      // Si se soltó una tecla de movimiento o brazo, enviar DETENER
+      // Si se soltó una tecla de movimiento o brazo, enviar DETENER / parar latido
       if (['w', 'arrowup', 's', 'arrowdown', 'a', 'arrowleft', 'd', 'arrowright', 'k', 'j', 'h', 'l'].includes(key)) {
-        onCommand(9, 'DETENER');
+        if (onStopContinuous) {
+          onStopContinuous();
+        } else {
+          onCommand(9, 'DETENER');
+        }
       }
     };
 
@@ -106,7 +129,7 @@ export function useKeyboardControls({ onCommand, enabled = true }: KeyboardContr
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [enabled, onCommand]);
+  }, [enabled, onCommand, onStartContinuous, onStopContinuous]);
 
   return { activeKey };
 }

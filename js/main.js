@@ -28,7 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const joystick = new VirtualJoystick(joystickBase, joystickHandle, (commandCode) => {
     if (commandCode !== null) {
-      movementController.executeCommand(commandCode, 'JOYSTICK');
+      if (commandCode === COMMANDS.DETENER) {
+        movementController.stopContinuousCommand(true);
+      } else {
+        movementController.startContinuousCommand(commandCode, 'JOYSTICK');
+      }
+    } else {
+      movementController.stopContinuousCommand(true);
     }
   });
 
@@ -52,14 +58,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 7. Vincular botones de movimientos complementarios (Brazo, Pala, Auxiliares)
   document.querySelectorAll('[data-command-code]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      const code = parseInt(btn.getAttribute('data-command-code'), 10);
-      if (!isNaN(code)) {
+    const code = parseInt(btn.getAttribute('data-command-code'), 10);
+    if (isNaN(code)) return;
+
+    // Códigos 5 al 8 son movimientos continuos de brazo y pala (Press-and-Hold con Heartbeat)
+    if (code >= 5 && code <= 8) {
+      let isPressed = false;
+
+      const handleStart = (e) => {
+        if (e.button !== undefined && e.button !== 0) return; // Solo clic primario
+        if (isPressed) return;
+        isPressed = true;
+        btn.classList.add('btn-state-active');
+        try {
+          if (btn.setPointerCapture && e.pointerId !== undefined) {
+            btn.setPointerCapture(e.pointerId);
+          }
+        } catch {}
+        movementController.startContinuousCommand(code, 'BOTON');
+      };
+
+      const handleEnd = (e) => {
+        if (!isPressed) return;
+        isPressed = false;
+        btn.classList.remove('btn-state-active');
+        try {
+          if (btn.releasePointerCapture && e.pointerId !== undefined) {
+            btn.releasePointerCapture(e.pointerId);
+          }
+        } catch {}
+        movementController.stopContinuousCommand(true);
+      };
+
+      btn.addEventListener('pointerdown', handleStart);
+      btn.addEventListener('pointerup', handleEnd);
+      btn.addEventListener('pointercancel', handleEnd);
+      btn.addEventListener('pointerleave', (e) => {
+        // Solo cancelar en leave si no hay pointer capture activo
+        if (!btn.hasPointerCapture || !btn.hasPointerCapture(e.pointerId)) {
+          handleEnd(e);
+        }
+      });
+      // Prevenir el evento de clic predeterminado para evitar disparos duplicados
+      btn.addEventListener('click', (e) => e.preventDefault());
+    } else {
+      // Códigos 10, 11, 12 son auxiliares de pulso (Power, Música, Luces)
+      btn.addEventListener('click', () => {
         btn.classList.add('btn-state-active');
         movementController.executeCommand(code, 'BOTON');
         setTimeout(() => btn.classList.remove('btn-state-active'), 250);
-      }
-    });
+      });
+    }
   });
 
   // 8. Cargar información real del vehículo desde la API
@@ -198,7 +247,11 @@ function initKeyboardControls() {
     if (cmd && activeKey !== e.code) {
       activeKey = e.code;
       e.preventDefault();
-      movementController.executeCommand(cmd, 'TECLADO');
+      if (cmd === COMMANDS.DETENER) {
+        movementController.emergencyStop();
+      } else {
+        movementController.startContinuousCommand(cmd, 'TECLADO');
+      }
     }
   });
 
@@ -207,10 +260,8 @@ function initKeyboardControls() {
 
     if (activeKey === e.code) {
       activeKey = null;
-      // Al soltar teclas de dirección (WASD), envía DETENER
-      if (['KeyW', 'KeyS', 'KeyA', 'KeyD'].includes(e.code)) {
-        movementController.executeCommand(COMMANDS.DETENER, 'TECLADO_LIBERAR');
-      }
+      // Al soltar cualquier tecla de movimiento o brazo, detener y enviar DETENER
+      movementController.stopContinuousCommand(true);
     }
   });
 }

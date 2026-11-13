@@ -3,12 +3,16 @@ import { ArrowUpCircle, ArrowDownCircle, Maximize2, Minimize2 } from 'lucide-rea
 
 interface ArmControlsProps {
   onCommand: (codigo: number, nombre: string) => void;
+  onStartContinuous?: (codigo: number, nombre: string) => void;
+  onStopContinuous?: () => void;
   demoCommand?: string | null;
   disabled?: boolean;
 }
 
 export const ArmControls: React.FC<ArmControlsProps> = ({
   onCommand,
+  onStartContinuous,
+  onStopContinuous,
   demoCommand = null,
   disabled = false,
 }) => {
@@ -28,7 +32,11 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
     } catch {}
     activeButtonRef.current = codigo;
     setActiveButton(codigo);
-    onCommand(codigo, nombre);
+    if (onStartContinuous) {
+      onStartContinuous(codigo, nombre);
+    } else {
+      onCommand(codigo, nombre);
+    }
   };
 
   const handlePressEnd = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -40,7 +48,11 @@ export const ArmControls: React.FC<ArmControlsProps> = ({
     if (activeButtonRef.current !== null) {
       activeButtonRef.current = null;
       setActiveButton(null);
-      onCommand(9, 'DETENER');
+      if (onStopContinuous) {
+        onStopContinuous();
+      } else {
+        onCommand(9, 'DETENER');
+      }
     }
   };
 
