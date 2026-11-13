@@ -95,6 +95,28 @@ export function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Control de scroll y touch-action según la pestaña activa (Control bloquea scroll móvil; Monitoreo lo rehabilita)
+  useEffect(() => {
+    if (activeTab === 'control') {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      document.documentElement.style.overflow = 'hidden';
+      document.documentElement.style.touchAction = 'none';
+    } else {
+      document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      document.documentElement.style.touchAction = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      document.body.style.touchAction = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      document.documentElement.style.touchAction = 'auto';
+    };
+  }, [activeTab]);
+
   // Actualizar bandera 'conectado' y último evento WS
   useEffect(() => {
     if (lastMessage) {
@@ -231,7 +253,11 @@ export function App() {
     : null;
 
   return (
-    <div className={`min-h-screen flex flex-col bg-slate-950 text-slate-100 ${isFullscreen ? 'h-screen overflow-hidden' : ''}`}>
+    <div
+      className={`min-h-screen flex flex-col bg-slate-950 text-slate-100 ${
+        activeTab === 'control' || isFullscreen ? 'h-screen overflow-hidden' : 'overflow-y-auto'
+      }`}
+    >
       {/* Header con Estado, Indicadores, Pestañas de Navegación y Botón Fullscreen */}
       <Header
         wsStatus={wsStatus}
@@ -264,7 +290,11 @@ export function App() {
       )}
 
       {/* Contenido Principal Multivista (Mobile First) */}
-      <main className="flex-1 w-full max-w-6xl mx-auto p-1.5 sm:p-3 flex flex-col justify-center">
+      <main
+        className={`w-full max-w-6xl mx-auto p-1.5 sm:p-3 flex flex-col ${
+          activeTab === 'control' ? 'flex-1 justify-center' : 'py-3'
+        }`}
+      >
         {/* VISTA 1: CONTROL REMOTO (GAMEPAD RC) */}
         <div className={activeTab === 'control' ? 'block' : 'hidden'}>
           <div className="bg-slate-900/85 border border-slate-800 rounded-2xl p-2 sm:p-3.5 shadow-xl backdrop-blur-md">
