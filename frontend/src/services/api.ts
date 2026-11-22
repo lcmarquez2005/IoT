@@ -100,7 +100,7 @@ export function getWsBaseUrl(): string {
     // En Vercel / producción, el navegador se conecta al WebSocket seguro de AWS EC2
     const envWs = import.meta.env.VITE_WS_BASE_URL;
     if (envWs && envWs.trim() !== '') return envWs.replace(/\/$/, '');
-    return 'wss://ec2-100-50-120-115.compute-1.amazonaws.com';
+    return 'wss://54.82.137.170';
   }
   return 'ws://localhost:3000';
 }

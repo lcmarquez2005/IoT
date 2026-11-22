@@ -1,6 +1,6 @@
 import https from 'https';
 
-const EC2_HOST = 'ec2-100-50-120-115.compute-1.amazonaws.com';
+const EC2_HOST = process.env.EC2_HOST || '54.82.137.170';
 
 const agent = new https.Agent({
   rejectUnauthorized: false, // Permitir certificado auto-firmado de AWS EC2
