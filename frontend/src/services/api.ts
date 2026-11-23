@@ -48,14 +48,14 @@ export function isVercel(): boolean {
 export function getApiBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_API_BASE_URL');
-    // Si el usuario configuró una URL manual explícita (que no sea amazonaws.com ni vacía)
-    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com') && saved !== '/api') {
+    // Si el usuario configuró una URL manual explícita (que no sea amazonaws.com, ni bridge viejo, ni vacía)
+    if (saved && saved.trim() !== '' && !saved.includes('amazonaws.com') && !saved.includes('iot-bridge-vercel') && saved !== '/api') {
       return saved.replace(/\/$/, '');
     }
 
-    // 1. Detección automática para GitHub Pages: conectar a través del puente Vercel
+    // 1. Detección automática para GitHub Pages: conectar a través del puente Vercel real
     if (isGitHubPages()) {
-      const bridgeUrl = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-bridge-vercel.vercel.app').replace(/\/$/, '');
+      const bridgeUrl = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-retroexcavadora-ws.vercel.app').replace(/\/$/, '');
       return bridgeUrl.endsWith('/api') ? bridgeUrl : `${bridgeUrl}/api`;
     }
 
@@ -87,7 +87,7 @@ export function setApiBaseUrl(url: string): void {
 export function getWsBaseUrl(): string {
   if (typeof window !== 'undefined') {
     const saved = localStorage.getItem('IOT_WS_BASE_URL');
-    if (saved && saved.trim() !== '') {
+    if (saved && saved.trim() !== '' && !saved.includes('100-50-120-115')) {
       return saved.replace(/\/$/, '');
     }
 

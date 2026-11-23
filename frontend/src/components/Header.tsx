@@ -284,9 +284,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    const defaultBridge = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-bridge-vercel.vercel.app').replace(/\/$/, '');
+                    const defaultBridge = (import.meta.env.VITE_VERCEL_BRIDGE_URL || 'https://iot-retroexcavadora-ws.vercel.app').replace(/\/$/, '');
                     setTempApi(defaultBridge.endsWith('/api') ? defaultBridge : `${defaultBridge}/api`);
-                    setTempWs('wss://ec2-100-50-120-115.compute-1.amazonaws.com');
+                    setTempWs('wss://54.82.137.170');
                   }}
                   className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-sky-400 hover:bg-slate-750 border border-slate-700 font-medium"
                 >
@@ -295,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    setTempWs('wss://ec2-100-50-120-115.compute-1.amazonaws.com');
+                    setTempWs('wss://54.82.137.170');
                   }}
                   className="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-300 hover:bg-slate-750 border border-slate-700"
                 >
