@@ -63,10 +63,14 @@ export function App() {
     localStorage.setItem('IOT_VEHICULO_ID', String(vehiculoId));
   }, [vehiculoId]);
 
-  // Consultar estado en base de datos periódicamente (cada 4s)
+  // Consultar estado en base de datos periódicamente (cada 4s) solo si WS no está activo
   useEffect(() => {
     let interval: number;
     const fetchStatus = () => {
+      // Si el WebSocket ya está conectado, el estado llega en tiempo real (<20ms).
+      // Evitamos saturar el backend con peticiones HTTP redundantes.
+      if (wsStatus === 'connected') return;
+
       obtenerEstadoVehiculo(vehiculoId)
         .then((res) => {
           setVehicleConnected(Boolean(res.conectado));
@@ -79,7 +83,7 @@ export function App() {
     fetchStatus();
     interval = window.setInterval(fetchStatus, 4000);
     return () => clearInterval(interval);
-  }, [vehiculoId]);
+  }, [vehiculoId, wsStatus]);
 
   // Comprobación periódica de salud de la API (Servidor AWS 21 APIs)
   useEffect(() => {
@@ -131,8 +135,7 @@ export function App() {
   const continuousTimerRef = useRef<number | null>(null);
   const activeContinuousRef = useRef<{ codigo: number; nombre: string } | null>(null);
   const stopDebounceTimerRef = useRef<number | null>(null);
-  const isSendingHeartbeatRef = useRef(false);
-  const heartbeatAbortRef = useRef<AbortController | null>(null);
+  const activeRequestAbortRef = useRef<AbortController | null>(null);
 
   // Manejador centralizado de envío de comandos
   const handleSendCommand = useCallback(
@@ -150,28 +153,24 @@ export function App() {
         activeContinuousRef.current = null;
       }
 
-      // Si es una orden nueva del usuario (no un latido repetido), abortar cualquier latido previo en vuelo
+      // Cancelar de inmediato cualquier petición previa en vuelo para dar prioridad máxima
+      if (activeRequestAbortRef.current) {
+        try {
+          activeRequestAbortRef.current.abort();
+        } catch {}
+        activeRequestAbortRef.current = null;
+      }
+
       if (!isHeartbeat) {
-        if (heartbeatAbortRef.current) {
-          try {
-            heartbeatAbortRef.current.abort();
-          } catch {}
-          heartbeatAbortRef.current = null;
-        }
         const displayCmd = formatCommandName(nombre, codigo);
         setLastAction({ nombre: displayCmd, codigo });
       }
 
-      let signal: AbortSignal | undefined;
-      if (isHeartbeat) {
-        isSendingHeartbeatRef.current = true;
-        const ctrl = new AbortController();
-        heartbeatAbortRef.current = ctrl;
-        signal = ctrl.signal;
-      }
+      const ctrl = new AbortController();
+      activeRequestAbortRef.current = ctrl;
 
       try {
-        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD', signal);
+        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD', ctrl.signal);
         if (!isHeartbeat) {
           setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
         }
@@ -204,15 +203,15 @@ export function App() {
           setTimeout(() => setNotification(null), 3500);
         }
       } finally {
-        if (isHeartbeat) {
-          isSendingHeartbeatRef.current = false;
+        if (activeRequestAbortRef.current === ctrl) {
+          activeRequestAbortRef.current = null;
         }
       }
     },
     [vehiculoId, wsStatus]
   );
 
-  // Detener ráfaga continua con buffer inteligente (40 ms) para evitar frenado en transiciones rápidas
+  // Detener de inmediato con buffer mínimo para transiciones limpias
   const handleStopContinuous = useCallback(() => {
     const wasActive = activeContinuousRef.current !== null || continuousTimerRef.current !== null;
     if (continuousTimerRef.current !== null) {
@@ -227,15 +226,15 @@ export function App() {
     }
 
     if (wasActive) {
-      // 40 ms de margen: si el usuario pasa rápido a otra tecla, se cancela este DETENER
+      // 20 ms de margen: parada ultra-rápida sin atorarse en el buffer
       stopDebounceTimerRef.current = window.setTimeout(() => {
         stopDebounceTimerRef.current = null;
         handleSendCommand(9, 'DETENER');
-      }, 40);
+      }, 20);
     }
   }, [handleSendCommand]);
 
-  // Iniciar ráfaga continua periódica (Heartbeat a 110 ms para mantener cómodo el watchdog de 300 ms del ESP32)
+  // Iniciar movimiento continuo (el firmware ahora es continuo, sin saturar con ráfagas cada 110ms)
   const handleStartContinuous = useCallback(
     (codigo: number, nombre: string) => {
       // Si había un DETENER programado, cancelarlo de inmediato: es una transición directa
@@ -253,24 +252,16 @@ export function App() {
         continuousTimerRef.current = null;
       }
 
-      // Abortar cualquier latido previo obsoleto
-      if (heartbeatAbortRef.current) {
-        try {
-          heartbeatAbortRef.current.abort();
-        } catch {}
-        heartbeatAbortRef.current = null;
-      }
-
       activeContinuousRef.current = { codigo, nombre };
-      // Enviar la nueva dirección inmediatamente
+      // 1. Envío instantáneo de la orden de inicio
       handleSendCommand(codigo, nombre, false);
 
-      // Latido continuo a 110 ms (garantiza que el ESP32 nunca se quede sin comando antes de 300 ms)
+      // 2. Latido relajado de respaldo (cada 1500 ms) para mantener telemetría sin congestionar la red
       continuousTimerRef.current = window.setInterval(() => {
-        if (activeContinuousRef.current && !isSendingHeartbeatRef.current) {
+        if (activeContinuousRef.current) {
           handleSendCommand(activeContinuousRef.current.codigo, activeContinuousRef.current.nombre, true);
         }
-      }, 110);
+      }, 1500);
     },
     [handleSendCommand]
   );
@@ -284,9 +275,9 @@ export function App() {
       if (stopDebounceTimerRef.current !== null) {
         clearTimeout(stopDebounceTimerRef.current);
       }
-      if (heartbeatAbortRef.current) {
+      if (activeRequestAbortRef.current) {
         try {
-          heartbeatAbortRef.current.abort();
+          activeRequestAbortRef.current.abort();
         } catch {}
       }
     };
