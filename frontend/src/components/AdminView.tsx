@@ -211,11 +211,17 @@ export const AdminView: React.FC<AdminViewProps> = ({
       } else if (session.user.rol === 'USUARIO') {
         const misU = await obtenerMisVehiculos(session.token);
         setMisVehiculos(misU);
+        let idParaConsultar = vehiculoId;
         if (misU.length > 0 && !misU.some((u) => u.id_vehiculo === vehiculoId)) {
-          setVehiculoId(misU[0].id_vehiculo);
+          idParaConsultar = misU[0].id_vehiculo;
+          setVehiculoId(idParaConsultar);
         }
-        const demos = await obtenerDemosEditor(session.token, vehiculoId);
-        setDemosVehiculo(demos);
+        if (idParaConsultar && misU.some((u) => u.id_vehiculo === idParaConsultar)) {
+          const demos = await obtenerDemosEditor(session.token, idParaConsultar);
+          setDemosVehiculo(demos);
+        } else {
+          setDemosVehiculo([]);
+        }
       }
     } catch (err: any) {
       showFeedback(err.message || 'Error cargando datos de rol', 'error');
