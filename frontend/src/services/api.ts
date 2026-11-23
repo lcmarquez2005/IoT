@@ -115,12 +115,27 @@ export async function enviarMovimiento(
   idVehiculo: number,
   codigo: number,
   origen: string = 'REACT_DASHBOARD',
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  guestToken?: string | null
 ) {
   const baseUrl = getApiBaseUrl();
-  const response = await fetch(`${baseUrl}/vehiculos/${idVehiculo}/movimiento`, {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  
+  if (typeof window !== 'undefined') {
+    const authToken = localStorage.getItem('IOT_AUTH_TOKEN');
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+  }
+
+  const tokenToUse = guestToken || (typeof window !== 'undefined' ? localStorage.getItem('IOT_GUEST_TOKEN') : null);
+  const url = tokenToUse
+    ? `${baseUrl}/vehiculos/${idVehiculo}/movimiento?guest_token=${encodeURIComponent(tokenToUse)}`
+    : `${baseUrl}/vehiculos/${idVehiculo}/movimiento`;
+
+  const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ codigo, origen }),
     signal,
   });
@@ -211,4 +226,279 @@ export async function obtenerEstadoDemo(idVehiculo: number): Promise<DemoEstadoE
   const response = await fetch(`${baseUrl}/vehiculos/${idVehiculo}/demos/estado-ejecucion`);
   if (!response.ok) throw new Error('No se pudo consultar el estado de la demo');
   return response.json();
+}
+
+
+// =============================================================================
+// SERVICIOS API PRÁCTICA 4.3: PLATAFORMA COMERCIAL MULTIUSUARIO IoT
+// =============================================================================
+
+import {
+  UserProfile,
+  UserSession,
+  ModeloComercial,
+  UnidadFisica,
+  ClienteItem,
+  SesionInvitado,
+  AuditoriaItem,
+  DemoDetalleItem,
+  DemoPasoEditor,
+} from '../types/vehicle';
+
+export async function loginUser(email: string, password: string): Promise<UserSession> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Credenciales inválidas');
+  }
+  const data = await response.json();
+  return {
+    token: data.access_token,
+    user: data.user,
+  };
+}
+
+export async function getMe(token: string): Promise<UserProfile> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Token expirado');
+  return response.json();
+}
+
+export async function obtenerModelos(): Promise<ModeloComercial[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/modelos`);
+  if (!response.ok) throw new Error('Error al consultar catálogo de modelos');
+  return response.json();
+}
+
+export async function crearModelo(token: string, data: Partial<ModeloComercial>): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/modelos`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al crear modelo');
+  }
+  return response.json();
+}
+
+export async function obtenerUnidades(token: string): Promise<UnidadFisica[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/unidades`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Error al consultar inventario de unidades');
+  return response.json();
+}
+
+export async function crearUnidad(token: string, data: any): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/unidades`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al dar de alta la unidad');
+  }
+  return response.json();
+}
+
+export async function asignarUnidad(
+  token: string,
+  idVehiculo: number,
+  idUsuarioPropietario: number | null,
+  estadoComercial: string = 'VENDIDO'
+): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/unidades/${idVehiculo}/asignar`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      id_usuario_propietario: idUsuarioPropietario,
+      estado_comercial: estadoComercial,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al asignar unidad');
+  }
+  return response.json();
+}
+
+export async function obtenerClientes(token: string): Promise<ClienteItem[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/usuarios/clientes`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Error al listar clientes');
+  return response.json();
+}
+
+export async function crearCliente(token: string, data: any): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/usuarios/clientes`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al registrar cliente');
+  }
+  return response.json();
+}
+
+export async function obtenerMisVehiculos(token: string): Promise<UnidadFisica[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/mis-vehiculos`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Error al consultar mis vehículos');
+  return response.json();
+}
+
+export async function obtenerUnidadExhibicion(): Promise<{
+  unidad: UnidadFisica;
+  disponible: boolean;
+  sesion_activa?: SesionInvitado | null;
+}> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/invitado/unidad-exhibicion`);
+  if (!response.ok) throw new Error('Error al consultar unidad de exhibición');
+  return response.json();
+}
+
+export async function solicitarPruebaInvitado(
+  idVehiculo: number,
+  nombreInvitado: string,
+  duracionMinutos: number = 3
+): Promise<SesionInvitado> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/invitado/solicitar-prueba`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id_vehiculo: idVehiculo,
+      nombre_invitado: nombreInvitado,
+      duracion_minutos: duracionMinutos,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'No se pudo iniciar el turno de prueba');
+  }
+  return response.json();
+}
+
+export async function liberarPruebaInvitado(tokenSesion: string): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/invitado/liberar-prueba`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token_sesion: tokenSesion }),
+  });
+  return response.json();
+}
+
+export async function verificarSesionInvitado(tokenSesion: string): Promise<SesionInvitado> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/invitado/sesion/${tokenSesion}`);
+  if (!response.ok) throw new Error('Sesión finalizada o no encontrada');
+  return response.json();
+}
+
+export async function obtenerAuditoria(token: string, limite: number = 50): Promise<AuditoriaItem[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/auditoria?limite=${limite}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Error al consultar auditoría');
+  return response.json();
+}
+
+export async function obtenerDemosEditor(token: string, idVehiculo: number): Promise<DemoDetalleItem[]> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/demos/editor/vehiculo/${idVehiculo}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error('Error al consultar rutinas en el editor');
+  return response.json();
+}
+
+export async function crearDemoEditor(
+  token: string,
+  idVehiculo: number,
+  nombre: string,
+  descripcion: string,
+  tipoDemo: string,
+  pasos: DemoPasoEditor[]
+): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/demos/editor`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      id_vehiculo: idVehiculo,
+      nombre,
+      descripcion,
+      tipo_demo: tipoDemo,
+      pasos,
+    }),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al guardar la rutina');
+  }
+  return response.json();
+}
+
+export async function eliminarDemoEditor(token: string, idDemo: number): Promise<any> {
+  const baseUrl = getApiBaseUrl();
+  const response = await fetch(`${baseUrl}/demos/editor/${idDemo}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || 'Error al eliminar demo');
+  }
+  return response.json();
+}
+
+export async function verificarSaludRds(): Promise<boolean> {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetchWithTimeout(`${baseUrl}/vehiculos/1/estado`, {}, 3000);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }

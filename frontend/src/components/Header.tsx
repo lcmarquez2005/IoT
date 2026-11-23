@@ -11,6 +11,9 @@ import {
   Minimize,
   Gamepad2,
   Server,
+  ShieldCheck,
+  Database,
+  Wifi,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -21,9 +24,10 @@ interface HeaderProps {
   setKeyboardEnabled: (enabled: boolean) => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
-  activeTab: 'control' | 'monitoring';
-  setActiveTab: (tab: 'control' | 'monitoring') => void;
+  activeTab: 'control' | 'monitoring' | 'admin';
+  setActiveTab: (tab: 'control' | 'monitoring' | 'admin') => void;
   apiHealthy?: boolean | null;
+  rdsHealthy?: boolean | null;
   wsStatus?: any;
   onReconnectWs?: () => void;
 }
@@ -39,6 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   setActiveTab,
   apiHealthy = true,
+  rdsHealthy = true,
+  wsStatus = 'disconnected',
 }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [tempApi, setTempApi] = useState(getApiBaseUrl());
@@ -109,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            {/* BARRA DE NAVEGACIÓN LIMPIA: CONTROL / MONITOREO */}
+            {/* BARRA DE NAVEGACIÓN LIMPIA: CONTROL / MONITOREO / ADMINISTRACIÓN */}
             <nav className="flex items-center bg-slate-950 p-0.5 rounded-xl border border-slate-800" aria-label="Navegación principal">
               <button
                 type="button"
@@ -137,13 +143,57 @@ export const Header: React.FC<HeaderProps> = ({
                 <Activity className="w-3.5 h-3.5" />
                 <span>Monitoreo</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('admin')}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  activeTab === 'admin'
+                    ? 'bg-amber-500 text-black shadow-md font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900'
+                }`}
+                aria-current={activeTab === 'admin' ? 'page' : undefined}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Administración</span>
+              </button>
             </nav>
           </div>
 
-          {/* INDICADORES DE CONECTIVIDAD + ACCIONES */}
+          {/* TRES INDICADORES INDEPENDIENTES DE ESTADO + ACCIONES */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {/* Servidor AWS · API 21 servicios */}
+            {/* Indicador 1: Servidor AWS · API 21 servicios */}
             {getApiStatusBadge()}
+
+            {/* Indicador 2: Amazon RDS MySQL */}
+            <span
+              className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                rdsHealthy
+                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30'
+                  : 'bg-rose-950/80 text-rose-400 border-rose-500/30'
+              }`}
+              title="Amazon RDS MySQL: Diagnóstico de disponibilidad de base de datos"
+            >
+              <Database className="w-2.5 h-2.5" />
+              RDS: <strong>{rdsHealthy ? 'Disponible' : 'Error'}</strong>
+            </span>
+
+            {/* Indicador 3: WebSocket WSS en navegador */}
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                wsStatus === 'connected'
+                  ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30'
+                  : wsStatus === 'connecting'
+                  ? 'bg-amber-950/80 text-amber-400 border-amber-500/30'
+                  : 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}
+              title="WebSocket WSS: Conexión en tiempo real del navegador con el backend"
+            >
+              <Wifi className="w-2.5 h-2.5" />
+              WSS:{' '}
+              <strong>
+                {wsStatus === 'connected' ? 'Conectado' : wsStatus === 'connecting' ? 'Reconectando...' : 'Desconectado'}
+              </strong>
+            </span>
 
             {/* Status Vehículo Microcontrolador (solo si está activo) */}
             <span

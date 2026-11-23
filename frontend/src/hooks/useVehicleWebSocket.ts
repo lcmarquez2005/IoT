@@ -40,7 +40,10 @@ export function useVehicleWebSocket(idVehiculo: number) {
     }
 
     const wsBase = getWsBaseUrl();
-    const wsUrl = `${wsBase}/ws/${idVehiculo}`;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('IOT_AUTH_TOKEN') : null;
+    const wsUrl = token
+      ? `${wsBase}/ws/${idVehiculo}?token=${encodeURIComponent(token)}`
+      : `${wsBase}/ws/${idVehiculo}`;
 
     setStatus('connecting');
 

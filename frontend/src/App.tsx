@@ -4,20 +4,34 @@ import { VirtualJoystick } from './components/VirtualJoystick';
 import { ArmControls } from './components/ArmControls';
 import { CenterConsole } from './components/CenterConsole';
 import { MonitoringView } from './components/MonitoringView';
+import { AdminView } from './components/AdminView';
 import { useVehicleWebSocket } from './hooks/useVehicleWebSocket';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
-import { enviarMovimiento, obtenerEstadoVehiculo, verificarSaludApi } from './services/api';
+import { enviarMovimiento, obtenerEstadoVehiculo, verificarSaludApi, verificarSaludRds } from './services/api';
 import { Smartphone } from 'lucide-react';
 import { WSEventMessage, formatCommandName } from './types/vehicle';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'control' | 'monitoring'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'monitoring' | 'admin'>('control');
   const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
+  const [rdsHealthy, setRdsHealthy] = useState<boolean | null>(null);
 
   const [vehiculoId, setVehiculoId] = useState<number>(() => {
     const saved = localStorage.getItem('IOT_VEHICULO_ID');
     return saved ? Number(saved) : 1;
   });
+
+  const [guestSessionToken, setGuestSessionToken] = useState<string | null>(() => {
+    return localStorage.getItem('IOT_GUEST_TOKEN');
+  });
+
+  useEffect(() => {
+    if (guestSessionToken) {
+      localStorage.setItem('IOT_GUEST_TOKEN', guestSessionToken);
+    } else {
+      localStorage.removeItem('IOT_GUEST_TOKEN');
+    }
+  }, [guestSessionToken]);
 
   const [keyboardEnabled, setKeyboardEnabled] = useState(true);
   const [vehicleConnected, setVehicleConnected] = useState(false);
@@ -98,6 +112,19 @@ export function App() {
     return () => clearInterval(timer);
   }, []);
 
+  // Comprobación periódica de disponibilidad de Amazon RDS MySQL
+  useEffect(() => {
+    let timer: number;
+    const checkRds = () => {
+      verificarSaludRds()
+        .then((ok) => setRdsHealthy(ok))
+        .catch(() => setRdsHealthy(false));
+    };
+    checkRds();
+    timer = window.setInterval(checkRds, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Control de scroll y touch-action según la pestaña activa (Control bloquea scroll móvil; Monitoreo lo rehabilita)
   useEffect(() => {
     if (activeTab === 'control') {
@@ -170,7 +197,7 @@ export function App() {
       activeRequestAbortRef.current = ctrl;
 
       try {
-        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD', ctrl.signal);
+        const res = await enviarMovimiento(vehiculoId, codigo, 'REACT_DASHBOARD', ctrl.signal, guestSessionToken);
         if (!isHeartbeat) {
           setLastHttpResult(`HTTP 200 — ${res.mensaje || 'Aceptado'}`);
         }
@@ -332,6 +359,7 @@ export function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         apiHealthy={apiHealthy}
+        rdsHealthy={rdsHealthy}
       />
 
       {/* Notificación flotante de error */}
@@ -412,6 +440,17 @@ export function App() {
             wsStatus={wsStatus}
             eventLogs={combinedLogs}
             onClearLogs={handleClearLogs}
+          />
+        </div>
+
+        {/* VISTA 3: ADMINISTRACIÓN COMERCIAL MULTIUSUARIO (PRÁCTICA 4.3) */}
+        <div className={activeTab === 'admin' ? 'block' : 'hidden'}>
+          <AdminView
+            vehiculoId={vehiculoId}
+            setVehiculoId={setVehiculoId}
+            setActiveTab={setActiveTab}
+            guestSessionToken={guestSessionToken}
+            setGuestSessionToken={setGuestSessionToken}
           />
         </div>
       </main>

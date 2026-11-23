@@ -95,3 +95,115 @@ export function formatCommandName(comando?: string | null, codigo?: number | nul
   }
   return comando || (codigo !== null && codigo !== undefined ? `Comando #${codigo}` : 'SIN MOVIMIENTOS');
 }
+
+
+// =============================================================================
+// TIPOS PRÁCTICA 4.3: PLATAFORMA COMERCIAL MULTIUSUARIO IoT
+// =============================================================================
+
+export type UserRole = 'ADMINISTRADOR' | 'USUARIO' | 'INVITADO';
+
+export interface UserProfile {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  id_rol: number;
+  rol: UserRole;
+  telefono?: string | null;
+  empresa?: string | null;
+  activo: boolean | number;
+}
+
+export interface UserSession {
+  token: string;
+  user: UserProfile;
+}
+
+export interface ModeloComercial {
+  id_modelo: number;
+  nombre: string;
+  categoria: string;
+  descripcion?: string | null;
+  especificaciones?: any;
+  foto_url?: string | null;
+  activo: boolean | number;
+  fecha_registro?: string;
+}
+
+export interface UnidadFisica {
+  id_vehiculo: number;
+  nombre: string;
+  id_modelo?: number | null;
+  modelo_nombre?: string | null;
+  categoria_modelo?: string | null;
+  id_usuario_propietario?: number | null;
+  propietario_nombre?: string | null;
+  propietario_email?: string | null;
+  estado_comercial: 'DISPONIBLE' | 'VENDIDO' | 'EXHIBICION' | 'MANTENIMIENTO' | string;
+  numero_serie?: string | null;
+  microcontrolador?: string | null;
+  descripcion?: string | null;
+  activo: boolean | number;
+  conectado: boolean | number;
+  fecha_registro?: string;
+}
+
+export interface ClienteItem {
+  id_usuario: number;
+  nombre: string;
+  email: string;
+  telefono?: string | null;
+  empresa?: string | null;
+  activo: boolean | number;
+  total_vehiculos?: number;
+  fecha_registro?: string;
+}
+
+export interface SesionInvitado {
+  id_sesion: number;
+  id_vehiculo: number;
+  vehiculo_nombre?: string | null;
+  token_sesion: string;
+  nombre_invitado: string;
+  inicia_en: string;
+  expira_en: string;
+  activa: boolean | number;
+  segundos_restantes?: number;
+}
+
+export interface AuditoriaItem {
+  id_auditoria: number;
+  id_usuario?: number | null;
+  usuario_nombre?: string | null;
+  accion: string;
+  entidad: string;
+  id_entidad?: number | null;
+  detalle?: any;
+  ip?: string | null;
+  fecha_hora: string;
+}
+
+export interface DemoPasoEditor {
+  id_comando: number;
+  duracion_ms: number;
+  pausa_ms: number;
+}
+
+export interface DemoDetalleItem {
+  id_demo: number;
+  id_vehiculo: number;
+  id_usuario?: number | null;
+  tipo_demo: 'FABRICA' | 'PRIVADA' | string;
+  nombre: string;
+  descripcion?: string | null;
+  activo: boolean | number;
+  movimientos: {
+    id_demo_movimiento: number;
+    orden: number;
+    id_comando: number;
+    comando?: string;
+    codigo?: number;
+    duracion_ms: number;
+    pausa_ms: number;
+  }[];
+}
