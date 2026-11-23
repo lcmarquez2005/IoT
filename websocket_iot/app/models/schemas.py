@@ -161,3 +161,169 @@ class MovimientoDemoUpdate(BaseModel):
 class MensajeResponse(BaseModel):
     mensaje: str
     id: int | None = None
+
+
+# =============================================================================
+# ESQUEMAS PRÁCTICA 4.3: PLATAFORMA COMERCIAL MULTIUSUARIO IoT
+# =============================================================================
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., description="Correo del usuario")
+    password: str = Field(..., description="Contraseña en texto plano")
+
+
+class UsuarioResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_usuario: int
+    nombre: str
+    email: str
+    id_rol: int
+    rol: str
+    telefono: str | None = None
+    empresa: str | None = None
+    activo: bool | int = True
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UsuarioResponse
+
+
+class UsuarioCreate(BaseModel):
+    nombre: str = Field(..., min_length=2, max_length=100)
+    email: str = Field(..., max_length=100)
+    password: str = Field(..., min_length=6)
+    id_rol: int = Field(default=2, description="2 para USUARIO (comprador)")
+    telefono: str | None = None
+    empresa: str | None = None
+
+
+class ModeloVehiculoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_modelo: int
+    nombre: str
+    categoria: str = "EXCAVADORA"
+    descripcion: str | None = None
+    especificaciones: dict | list | str | None = None
+    foto_url: str | None = None
+    activo: bool | int = True
+    fecha_registro: datetime | str | None = None
+
+
+class ModeloVehiculoCreate(BaseModel):
+    nombre: str = Field(..., min_length=3, max_length=80)
+    categoria: str = Field(default="EXCAVADORA")
+    descripcion: str | None = None
+    especificaciones: dict | None = None
+    foto_url: str | None = None
+
+
+class ModeloVehiculoUpdate(BaseModel):
+    nombre: str
+    categoria: str = "EXCAVADORA"
+    descripcion: str | None = None
+    especificaciones: dict | None = None
+    foto_url: str | None = None
+    activo: bool = True
+
+
+class UnidadFisicaResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_vehiculo: int
+    nombre: str
+    id_modelo: int | None = None
+    modelo_nombre: str | None = None
+    categoria_modelo: str | None = None
+    id_usuario_propietario: int | None = None
+    propietario_nombre: str | None = None
+    propietario_email: str | None = None
+    estado_comercial: str = "EXHIBICION"
+    numero_serie: str | None = None
+    microcontrolador: str | None = "ESP32"
+    descripcion: str | None = None
+    activo: bool | int = True
+    conectado: bool | int = False
+    fecha_registro: datetime | str | None = None
+
+
+class UnidadFisicaCreate(BaseModel):
+    nombre: str
+    id_modelo: int | None = None
+    numero_serie: str | None = None
+    microcontrolador: str | None = "ESP32"
+    estado_comercial: str = "DISPONIBLE"
+    descripcion: str | None = None
+
+
+class AsignarUnidadRequest(BaseModel):
+    id_usuario_propietario: int | None = Field(default=None, description="ID del cliente o NULL para desasignar")
+    estado_comercial: str = Field(default="VENDIDO", description="DISPONIBLE, VENDIDO, EXHIBICION, MANTENIMIENTO")
+
+
+class SolicitarPruebaRequest(BaseModel):
+    id_vehiculo: int = Field(..., description="ID del vehículo de exhibición")
+    nombre_invitado: str = Field(..., min_length=2, max_length=100)
+    duracion_minutos: int = Field(default=3, ge=1, le=10)
+
+
+class SesionInvitadoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_sesion: int
+    id_vehiculo: int
+    vehiculo_nombre: str | None = None
+    token_sesion: str
+    nombre_invitado: str
+    inicia_en: datetime | str
+    expira_en: datetime | str
+    activa: bool | int
+    segundos_restantes: int | None = None
+
+
+class LiberarPruebaRequest(BaseModel):
+    token_sesion: str
+
+
+class AuditoriaResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_auditoria: int
+    id_usuario: int | None = None
+    usuario_nombre: str | None = None
+    accion: str
+    entidad: str
+    id_entidad: int | None = None
+    detalle: dict | list | str | None = None
+    ip: str | None = None
+    fecha_hora: datetime | str | None = None
+
+
+class DemoPasoEditor(BaseModel):
+    id_comando: int
+    duracion_ms: int = Field(..., ge=100, le=15000)
+    pausa_ms: int = Field(default=0, ge=0, le=5000)
+
+
+class DemoEditorRequest(BaseModel):
+    id_vehiculo: int
+    nombre: str = Field(..., min_length=2, max_length=80)
+    descripcion: str | None = None
+    tipo_demo: str = Field(default="PRIVADA", description="FABRICA o PRIVADA")
+    pasos: list[DemoPasoEditor] = Field(default_factory=list)
+
+
+class DemoDetalleResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id_demo: int
+    id_vehiculo: int
+    id_usuario: int | None = None
+    tipo_demo: str = "FABRICA"
+    nombre: str
+    descripcion: str | None = None
+    activo: bool | int = True
+    movimientos: list[MovimientoDemoResponse] = Field(default_factory=list)

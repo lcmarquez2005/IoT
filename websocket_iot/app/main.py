@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from app.core.dependencies import check_vehicle_ownership, get_optional_current_user, get_user_from_db
+from app.core.security import decode_access_token
 from app.models.estado import Estado
 from app.models.schemas import (
     VehiculoResponse,
@@ -22,6 +24,12 @@ from app.models.schemas import (
     MovimientoIndividualResponse,
     MensajeResponse,
 )
+from app.routers.auth import router as auth_router
+from app.routers.modelos import router as modelos_router
+from app.routers.unidades import router as unidades_router
+from app.routers.invitado import router as invitado_router
+from app.routers.demos_editor import router as demos_editor_router
+from app.routers.auditoria import router as auditoria_router
 from app.services.status_service import StatusService
 from app.services.vehiculo_service import VehiculoService
 from app.services.demo_execution_service import DemoExecutionService
@@ -29,8 +37,8 @@ from app.websocket.websocket_manager import WebSocketManager
 
 app = FastAPI(
     title="Servidor IoT",
-    description="API HTTP y WebSocket para control y monitoreo de vehículos IoT conectada a Amazon RDS (21 Stored Procedures integrados).",
-    version="1.0",
+    description="API HTTP y WebSocket para control, monitoreo y administración comercial multiusuario de vehículos IoT conectada a Amazon RDS (Práctica 4.3).",
+    version="2.0",
 )
 
 app.add_middleware(
@@ -40,6 +48,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Registrar Routers Modulares de Administración IoT (Práctica 4.3)
+app.include_router(auth_router)
+app.include_router(modelos_router)
+app.include_router(unidades_router)
+app.include_router(invitado_router)
+app.include_router(demos_editor_router)
+app.include_router(auditoria_router)
 
 websocket_manager = WebSocketManager()
 status_service = StatusService()
@@ -216,9 +232,15 @@ def obtener_historial_vehiculo(id_vehiculo: int):
     response_model=MovimientoIndividualResponse,
     tags=["Movimientos"],
     summary="Ejecutar movimiento individual para un vehículo",
-    description="Valida vehículo y comando, ejecuta atómicamente sp_actualizar_estado y sp_registrar_historial en RDS, y emite evento por WebSocket tras el commit exitoso.",
+    description="Valida autorización por recurso (IDOR), ejecuta atómicamente sp_actualizar_estado y sp_registrar_historial en RDS, y emite evento por WebSocket tras el commit exitoso.",
 )
-async def ejecutar_movimiento(id_vehiculo: int, request: MovimientoRequest):
+async def ejecutar_movimiento(
+    id_vehiculo: int,
+    request: MovimientoRequest,
+    current_user: dict | None = Depends(get_optional_current_user),
+    guest_token: str | None = Query(default=None, alias="guest_token"),
+):
+    check_vehicle_ownership(id_vehiculo, current_user, is_write=True, guest_token=guest_token)
     resultado = vehiculo_service.ejecutar_movimiento_individual(
         id_vehiculo=id_vehiculo,
         id_comando=request.id_comando,
@@ -446,13 +468,36 @@ def estado_ejecucion_demo(id_vehiculo: int):
 # =============================================================================
 
 @app.websocket("/ws/{id_vehiculo}")
-async def websocket_vehiculo_endpoint(websocket: WebSocket, id_vehiculo: int):
+async def websocket_vehiculo_endpoint(
+    websocket: WebSocket,
+    id_vehiculo: int,
+    token: str | None = None,
+):
     try:
         vehiculo = vehiculo_service.obtener_vehiculo(id_vehiculo)
     except Exception:
         await websocket.accept()
         await websocket.close(code=4004, reason=f"Vehículo {id_vehiculo} no encontrado")
         return
+
+    # Control de acceso a nivel de recurso para WebSocket (anti-IDOR)
+    # Si la unidad es vendida/privada, verificar credenciales
+    if vehiculo.get("id_usuario_propietario") and vehiculo.get("estado_comercial") not in ("EXHIBICION", "DISPONIBLE"):
+        user = None
+        if token:
+            payload = decode_access_token(token)
+            if payload and "sub" in payload:
+                user = get_user_from_db(int(payload["sub"]))
+
+        if not user:
+            await websocket.accept()
+            await websocket.close(code=4001, reason="Autenticación requerida para acceder a unidad privada")
+            return
+
+        if user["rol"] != "ADMINISTRADOR" and vehiculo["id_usuario_propietario"] != user["id_usuario"]:
+            await websocket.accept()
+            await websocket.close(code=4003, reason="Acceso denegado: este vehículo pertenece a otro usuario")
+            return
 
     await websocket_manager.conectar(websocket, id_vehiculo=id_vehiculo)
 

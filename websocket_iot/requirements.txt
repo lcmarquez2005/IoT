@@ -4,3 +4,5 @@ pydantic
 python-dotenv
 pymysql
 cryptography
+pyjwt
+bcrypt
