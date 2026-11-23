@@ -70,7 +70,7 @@ bool controlRemotoEncendido     = false;
 const unsigned long DURACION_PULSO_AUXILIAR_MS  = 60;   // Para botones de pulso corto (luz, música)
 const unsigned long DURACION_PULSO_ENCENDIDO_MS = 100;  // Pulso corto para encender el control remoto
 const unsigned long DURACION_PULSO_APAGADO_MS   = 3000; // Pulso sostenido de 3 segundos para apagar el control remoto
-const unsigned long DURACION_MOVIMIENTO_DEFAULT = 300; // Reducido a 300 ms (la mitad) para seguridad y latido continuo
+const unsigned long DURACION_MOVIMIENTO_DEFAULT = 0;    // 0 = Modo continuo: El vehículo NUNCA se detiene solo. Mantiene el movimiento activo hasta recibir DETENER (cód 9)
 
 // Control del botón físico de reset de Wi-Fi (5 segundos a GND)
 unsigned long tiempoPulsadoResetWifi = 0;
@@ -139,9 +139,13 @@ void ejecutarCanal(uint16_t mascara, unsigned long duracionMs, const char* nombr
   actualizarSalidas(mascara);
   tiempoInicioAccion = millis();
   duracionAccionMs = duracionMs;
-  accionEnCurso = true;
+  accionEnCurso = (duracionMs > 0);
 
-  Serial.printf("[ACTUADOR] -> %s | Salidas: 0x%04X | Duracion: %lu ms\n", nombre, mascara, duracionMs);
+  if (duracionMs > 0) {
+    Serial.printf("[ACTUADOR] -> %s | Salidas: 0x%04X | Duracion: %lu ms\n", nombre, mascara, duracionMs);
+  } else {
+    Serial.printf("[ACTUADOR] -> %s | Salidas: 0x%04X | Modo continuo (hasta recibir DETENER)\n", nombre, mascara);
+  }
 }
 
 // ============================================================================
@@ -155,7 +159,7 @@ void despacharComando(int codigo, const char* comando, unsigned long duracion) {
     return;
   }
 
-  unsigned long tDur = (duracion > 0) ? duracion : DURACION_MOVIMIENTO_DEFAULT;
+  unsigned long tDur = duracion; // 0 = sin auto-detención en movimientos continuos
 
   // 1. AVANZAR
   if (codigo == 1 || (comando != nullptr && strcasecmp(comando, "AVANZAR") == 0)) {
@@ -315,7 +319,7 @@ void procesarEventoWebSocket(const char* payload) {
     const char* origen  = doc["origen"] | "MANUAL";
     Serial.printf("[WSS] -> MOVIMIENTO_INDIVIDUAL: '%s' (cod: %d) [Origen: %s]\n", comando, codigo, origen);
 
-    despacharComando(codigo, comando, DURACION_MOVIMIENTO_DEFAULT);
+    despacharComando(codigo, comando, 0); // 0 = Modo continuo: nunca se detiene solo
     return;
   }
 
