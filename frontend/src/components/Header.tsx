@@ -370,21 +370,35 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex items-center justify-between gap-2 mt-6">
               <button
                 type="button"
-                onClick={() => setShowConfig(false)}
-                className="px-4 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                onClick={() => {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.reload();
+                }}
+                className="px-3 py-2 rounded-lg text-xs font-semibold bg-rose-950/80 text-rose-400 hover:bg-rose-900/80 border border-rose-800/60 transition-colors"
+                title="Borra tokens expirados, sesiones y configuraciones guardadas en el navegador"
               >
-                Cancelar
+                🧹 Limpiar Almacenamiento
               </button>
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                className="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
-              >
-                Guardar y Recargar
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfig(false)}
+                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-300 hover:bg-slate-800 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveConfig}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors shadow-lg shadow-amber-500/20"
+                >
+                  Guardar y Recargar
+                </button>
+              </div>
             </div>
           </div>
         </div>
