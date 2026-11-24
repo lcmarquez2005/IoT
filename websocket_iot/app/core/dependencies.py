@@ -134,16 +134,7 @@ def check_vehicle_ownership(id_vehiculo: int, user: dict | None, is_write: bool 
     if user and user.get("rol") == "ADMINISTRADOR":
         return vehiculo
 
-    # Usuario comprador: solo su propia unidad
-    if user and user.get("rol") == "USUARIO":
-        if vehiculo["id_usuario_propietario"] != user["id_usuario"]:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Acceso denegado: El vehículo ID {id_vehiculo} no está asignado a su cuenta de usuario.",
-            )
-        return vehiculo
-
-    # Modo Invitado o público
+    # Modo Exhibición / Showroom público: abierto a todos (invitados, clientes y usuarios)
     if vehiculo["estado_comercial"] == "EXHIBICION":
         if not is_write:
             return vehiculo  # Lectura pública permitida en unidad de exhibición
@@ -171,10 +162,19 @@ def check_vehicle_ownership(id_vehiculo: int, user: dict | None, is_write: bool 
                 detail="La unidad de exhibición se encuentra actualmente en un turno exclusivo de prueba por otro usuario.",
             )
 
-        # Si no hay sesión ocupada, se permite el movimiento
+        # Si no hay sesión ocupada, se permite el movimiento (invitado o cliente)
         return vehiculo
 
-    # Si no es de exhibición y el usuario no es propietario
+    # Unidades privadas o vendidas: validación estricta de propiedad (Anti-IDOR)
+    if user and user.get("rol") == "USUARIO":
+        if vehiculo["id_usuario_propietario"] != user["id_usuario"]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Acceso denegado: El vehículo ID {id_vehiculo} no está asignado a su cuenta de usuario.",
+            )
+        return vehiculo
+
+    # Si no es de exhibición y el usuario no es propietario ni admin
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail=f"Acceso denegado para el vehículo ID {id_vehiculo}.",

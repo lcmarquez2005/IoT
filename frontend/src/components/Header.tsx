@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Database,
   Wifi,
+  Truck,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -157,6 +158,24 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Administración</span>
               </button>
             </nav>
+
+            {/* SELECTOR RÁPIDO DE VEHÍCULO / UNIDAD */}
+            <div className="flex items-center gap-1.5 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 shadow-inner">
+              <Truck className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <select
+                value={vehiculoId}
+                onChange={(e) => {
+                  const id = Number(e.target.value);
+                  setVehiculoId(id);
+                  localStorage.setItem('IOT_VEHICULO_ID', String(id));
+                }}
+                className="bg-transparent text-xs font-bold text-slate-200 focus:outline-none cursor-pointer"
+                title="Selecciona la excavadora o unidad que deseas controlar/monitorear"
+              >
+                <option value={1} className="bg-slate-900 text-white font-medium">Unidad #1 (Exhibición)</option>
+                <option value={2} className="bg-slate-900 text-amber-400 font-medium">Unidad #2 (Cliente)</option>
+              </select>
+            </div>
           </div>
 
           {/* TRES INDICADORES INDEPENDIENTES DE ESTADO + ACCIONES */}

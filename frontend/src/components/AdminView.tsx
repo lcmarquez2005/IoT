@@ -271,6 +271,10 @@ export const AdminView: React.FC<AdminViewProps> = ({
       const res = await loginUser(loginEmail, loginPassword);
       setSession(res);
       setShowLoginModal(false);
+      if (res.user.rol === 'USUARIO') {
+        setVehiculoId(2);
+        localStorage.setItem('IOT_VEHICULO_ID', '2');
+      }
       showFeedback(`Bienvenido, ${res.user.nombre} (${res.user.rol})`);
     } catch (err: any) {
       setLoginError(err.message || 'Error al iniciar sesión');
@@ -297,7 +301,15 @@ export const AdminView: React.FC<AdminViewProps> = ({
       setLoginPassword(pass);
       const res = await loginUser(email, pass);
       setSession(res);
-      showFeedback(`Autenticado rápidamente como ${res.user.rol}`);
+      if (rol === 'CLIENTE') {
+        setVehiculoId(2);
+        localStorage.setItem('IOT_VEHICULO_ID', '2');
+        showFeedback(`Autenticado como Cliente: Unidad #2 asignada seleccionada`);
+      } else {
+        setVehiculoId(1);
+        localStorage.setItem('IOT_VEHICULO_ID', '1');
+        showFeedback(`Autenticado rápidamente como ${res.user.rol}`);
+      }
     } catch (err: any) {
       setLoginError(err.message || 'Error en inicio rápido');
     } finally {
@@ -307,7 +319,9 @@ export const AdminView: React.FC<AdminViewProps> = ({
 
   const handleLogout = () => {
     setSession(null);
-    showFeedback('Sesión cerrada correctamente');
+    setVehiculoId(1);
+    localStorage.setItem('IOT_VEHICULO_ID', '1');
+    showFeedback('Sesión cerrada correctamente (Unidad #1 de exhibición seleccionada)');
   };
 
   // Acciones Administrador: Crear Modelo
