@@ -319,7 +319,7 @@ export const AdminView: React.FC<AdminViewProps> = ({
         nombre: nuevoModeloNombre,
         categoria: nuevoModeloCategoria,
         descripcion: nuevoModeloDesc,
-        foto_url: nuevoModeloFoto || 'https://images.unsplash.com/photo-1578328819058-b69f3a3b0f6b?auto=format&fit=crop&w=800&q=80',
+        foto_url: nuevoModeloFoto || 'https://raw.githubusercontent.com/lcmarquez2005/IoT/main/frontend/public/carrito-iot.png',
       });
       showFeedback('Modelo comercial registrado con éxito');
       setShowNuevoModeloModal(false);
