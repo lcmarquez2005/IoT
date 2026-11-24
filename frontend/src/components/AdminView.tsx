@@ -731,11 +731,11 @@ export const AdminView: React.FC<AdminViewProps> = ({
                   >
                     <div>
                       {m.foto_url && (
-                        <div className="h-36 w-full overflow-hidden bg-slate-950 relative">
+                        <div className="h-60 sm:h-72 w-full overflow-hidden bg-slate-950 relative flex items-center justify-center p-2 border-b border-slate-800">
                           <img
                             src={m.foto_url}
                             alt={m.nombre}
-                            className="w-full h-full object-cover opacity-85 hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 drop-shadow-md"
                           />
                           <span className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] font-mono text-amber-400 border border-amber-500/30">
                             {m.categoria}
@@ -1338,8 +1338,12 @@ export const AdminView: React.FC<AdminViewProps> = ({
               {modelos.map((m) => (
                 <div key={m.id_modelo} className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
                   {m.foto_url && (
-                    <div className="h-44 w-full overflow-hidden bg-slate-950">
-                      <img src={m.foto_url} alt={m.nombre} className="w-full h-full object-cover" />
+                    <div className="h-64 sm:h-80 w-full overflow-hidden bg-slate-950 relative flex items-center justify-center p-3 border-b border-slate-800">
+                      <img
+                        src={m.foto_url}
+                        alt={m.nombre}
+                        className="w-full h-full object-contain hover:scale-105 transition-transform duration-300 drop-shadow-md"
+                      />
                     </div>
                   )}
                   <div className="p-4 space-y-2">
